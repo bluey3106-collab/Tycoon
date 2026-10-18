@@ -89,7 +89,10 @@ h3{font-size:15px;font-weight:650}
 .feed{display:flex;flex-direction:column;margin-top:10px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel2)}
 .post{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .post:last-child{border-bottom:0}
-.post .avatar{width:40px;height:40px;font-size:14px}
+.post .card.decision{border-color:rgba(224,160,48,.6);background:linear-gradient(135deg,rgba(224,160,48,.10),transparent)}
+.bizopen img{transition:transform .3s}
+.bizopen:active img{transform:scale(1.02)}
+.avatar{width:40px;height:40px;font-size:14px}
 .post .pb{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .post .ph{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .post .pt{font-size:14.5px;line-height:1.4}
@@ -1080,7 +1083,7 @@ const BIZ_NAMES={valet:["Gleam","Shine Bros","Bubble Bay","Mirror Finish"],tyres
 const lvlMult=l=>Math.pow(1.45,l-1);
 function bizCity(s){ return s.at==="air"?null:s.at; }
 function bizBase(b){ return b.base||BIZ[b.type].profit; }
-function bizExpected(s,b){ const T=BIZ[b.type]; return bizBase(b)*lvlMult(b.level)*((T.fit||{})[b.city]||1)*(b.mod||1)*(1+fameEff(s)/300)*(hasPerk(s,800)?1.1:1); }
+function bizExpected(s,b){ const T=BIZ[b.type]; return bizBase(b)*lvlMult(b.level)*((T.fit||{})[b.city]||1)*(b.mod||1)*(1+fameEff(s)/300)*(hasPerk(s,800)?1.1:1)*(b.mg?mgmtMult(s,b):1); }
 function bizBoost(s,b){ let m=1; for(const x of b.boost||[]) if(x.until>s.t) m*=x.m; return m; }
 function bizUpCost(b){ return Math.round(BIZ[b.type].price*0.6*Math.pow(1.6,b.level-1)/1000)*1000; }
 function bizValue(s,b){ const h=(b.hist||[]).slice(-14); const avg=h.length>=3?h.reduce((t,x)=>t+x,0)/h.length:bizExpected(s,b); const cost=b.cost||BIZ[b.type].price; const cap=cost*(1+Math.max(0,s.t-(b.bought||0))/DAY/30); return Math.round(Math.min(cap,Math.max(cost*0.55, avg*YEAR_DAYS*1.05))/1000)*1000; }
@@ -1717,7 +1720,7 @@ function lottoDraw(s){
 }
 function endOfDay(s){
   if(s.log&&s.log.length>120) s.log.length=120;
-  propDaily(s); investDaily(s); luxDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
+  propDaily(s); investDaily(s); luxDaily(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
   let running=0; for(const g of s.garages){ if(g.franchise){ franchiseDay(s,g); continue; } running+=dailyRunning(s,g).reduce((t,l)=>t+l[1],0); }
   s.cash-=running; spend(s,running,"running");
   const r={day:dayNo(s.t-1),...s.today,rent:s.today.rent||0,running,type:s.dayType,garages:s.garages.map(g=>({name:g.name,revenue:g.today.revenue,jobs:g.today.jobs,franchise:!!g.franchise}))}; r.profit=r.revenue+(r.rent||0)-r.cogs-r.overheads;
@@ -1822,7 +1825,73 @@ function concert(s){ const c=s.club; if(!c) return {ok:false}; if((c.concertAt||
 function documentary(s){ const c=s.club; if(!c) return {ok:false}; if(c.docSeason===c.seasons) return {ok:false,msg:"One documentary a season."}; const fee=Math.round(LEAGUES[c.tier].tv*3*(1+fameEff(s)/100)/1000)*1000;
   s.cash+=fee; s.today.rent=(s.today.rent||0)+fee; c.docSeason=c.seasons; gainFame(s,5); addPost(s,`Binged the ${c.name} documentary in one night. ${s.name} in the dressing room 😂🔥`,{big:3}); dirty(s); return {ok:true,fee}; }
 
-if(typeof module!=="undefined") module.exports={fameEff,fameTier,FAME_TIERS,FAME_PERKS,hasPerk,appearanceFee,FAME_MAX,creator,startChannel,filmVideo,merchUp,merchWeekly,speakGig,speakFee,bookDeal,ytSubs,buildBoxes,boxIncome,boxCost,namingOffer,signNaming,concert,documentary,BIZ_TYPES,BIZ,buildBiz,genDeals,buyDeal,upgradeBiz,sellBiz,bizAct,bizValue,bizExpected,bizUpCost,empireValue,RIVALS,rivalsState,buyStake,sellStake,takeControl,stakeCost,stakesValue,floatGroup,groupCap,groupBase,tradeGroup,IPO_MIN,socialState,followers,answerDm,socialDaily,empireDaily,lvlMult,windowOpen,windowNext,worldClass,wcWilling,ELITE_CLUBS,shopClub,clubValue,residence,taxRate,TAX_BY_CITY,playCup,cupReady,cupTie,CUP_ROUNDS,COACHES,hireCoach,coachWage,upgradeFac,facCost,FACILITY_LV,shopIncome,findSponsor,signSponsor,TOURS,preseasonTour,kitLaunch,CITY_INFO,cityDo,cityMult,cityActs,candidates,staffWage,TRAITS,trait,staffSpeed,staffFix,makeCandidate,CLUBS,clubPrice,TIER_CAP,SIGN_LIMIT,answerAsk,mgrIdeas,mgrAsk,buyPlayer,sellOffer,playerValue,bestXI,acceptBid,rejectBid,clubFix,genMarket,TACTICS,clubEliteScore,mgrNote,buyTickets,lottoDraw,nextDrawDay,LOTTO_PRICE,LOTTO_MAX,LOTTO_N,LOTTO_PICK,LOTTO_PRIZES,sellGarage,businessValue,garageValue,addCrew,removeCrew,workerSpeed,buyCar,driveCar,trackDay,restoreCar,sellCar,buyYacht,yachtParty,yachtCruise,sellYacht,buyHorse,enterRace,studHorse,sellHorse,buyClub,signPlayer,sellPlayer,expandStadium,sellClub,luxValue,clubWages,travel,buyJet,holiday,flightMins,genListings,buyProperty,setPropMode,renovate,sellProperty,buyFreehold,buyInvest,sellInvest,investTotal,invValue,loanCheck,workProfitPerWeek,moneyIO,worth,yearEnd,newGame,migrate,advance,accept,decline,passOn,startJob,jumpIn,stepBack,completeJob,orderParts,partsNeeded,canStart,currentPopup,payBill,delayBill,dismissInfo,buyKit,buyLift,buyCert,runCampaign,hire,fire,openGarage,franchiseOut,takeLoan,health,stars,estimate,catchUp,JOB,LOCS,DAY,G,allJobs,stockCount,weekSummary,nightFF};
+// =================== BUSINESS PAGES: run each business properly ===================
+// Each business has a reputation, a price setting, staffing, marketing, features to build, a boss and decisions to make.
+const BIZ_UNIT={valet:"cars",tyres:"cars",vans:"call-outs",restaurant:"covers",gym:"members",dealer:"cars",hire:"rentals",nightclub:"guests",distributor:"orders",hotel:"guests",developer:"flats",bank:"clients",carbrand:"cars",airline:"passengers"};
+const BIZ_FEATURES={
+ valet:[["Ceramic coating bay","Premium detailing — +10%"],["Subscription club","Members wash weekly — +10%"],["Second wash lane","Double the queue — +15%"],["Mobile detailing vans","Wash cars at offices — +15%"],["Supercar detailing studio","Celebrities' cars — +20%"]],
+ tyres:[["Wheel alignment rig","+10% on every visit"],["Run-flat & performance tyres","+10%"],["24/7 emergency fitting","+15%"],["Fleet contracts desk","+15%"],["Second branch","+20%"]],
+ vans:[["Two more vans","+15%"],["Booking app","+10%"],["Breakdown cover deal","+15%"],["EV-ready van","+10%"],["Franchise the brand","+20%"]],
+ restaurant:[["Wine cellar","+10%"],["Chef's table experience","+12%"],["Delivery kitchen","+15%"],["Rooftop terrace","+15%"],["Chase a Michelin star","+25%"]],
+ gym:[["Spa & sauna","+10%"],["Boxing ring","+10%"],["Personal trainer team","+15%"],["24-hour access","+12%"],["Second site","+20%"]],
+ dealer:[["Detailing & prep bay","+10%"],["Finance desk","+15%"],["Supercar showroom","+15%"],["Online sales","+12%"],["Exclusive brand franchise","+25%"]],
+ hire:[["Airport desk","+15%"],["Luxury fleet","+15%"],["Van & minibus hire","+10%"],["App with keyless pickup","+12%"],["Chauffeur service","+20%"]],
+ nightclub:[["VIP mezzanine","+12%"],["LED wall & lasers","+10%"],["Rooftop terrace","+15%"],["Resident superstar DJ","+20%"],["Own record label","+20%"]],
+ distributor:[["Second warehouse","+15%"],["Next-day fleet","+12%"],["Online trade shop","+15%"],["Own-brand parts","+20%"],["European hub","+20%"]],
+ hotel:[["Rooftop pool bar","+12%"],["Spa","+12%"],["Presidential suite","+15%"],["Casino floor","+25%"],["Helipad","+15%"]],
+ developer:[["In-house architects","+12%"],["Show-flat marketing suite","+10%"],["Land bank","+15%"],["Luxury interiors arm","+15%"],["Skyscraper permit","+30%"]],
+ bank:[["Wealth management desk","+15%"],["Mobile banking app","+12%"],["Private jet lending","+15%"],["Investment banking arm","+25%"],["Offshore branch","+20%"]],
+ carbrand:[["Wind tunnel","+12%"],["Racing division","+15%"],["Second factory","+20%"],["Dealer network","+15%"],["Limited-edition line","+25%"]],
+ airline:[["Business-class lounges","+12%"],["Loyalty scheme","+12%"],["New wide-body jets","+20%"],["Cargo division","+15%"],["Hub at a new airport","+25%"]]};
+const FEAT_COST=[.15,.3,.6,1.1,2], FEAT_GAIN=[.07,.07,.1,.1,.15];
+const PRICE_SET={budget:{name:"Budget",m:.92,rep:+.6,desc:"More customers, thinner margins. Reputation slowly rises."},normal:{name:"Normal",m:1,rep:0,desc:"Balanced."},premium:{name:"Premium",m:1.18,rep:-.5,desc:"Big margins — but needs a good reputation (60+) or customers walk."}};
+const STAFF_SET={lean:{name:"Lean",m:1.06,rep:-.7,desc:"Cheaper, but service slips."},normal:{name:"Normal",m:1,rep:0,desc:"Balanced."},generous:{name:"Generous",m:.95,rep:+.8,desc:"Costs more, customers love it."}};
+const MKT_SET={none:{name:"None",cost:0,m:1,desc:"No ad spend."},local:{name:"Local ads",cost:.002,m:1.08,desc:"Steady extra trade."},big:{name:"Big campaign",cost:.006,m:1.15,desc:"Billboards and influencers. Costs every night."}};
+const BOSSES=[{lvl:0,name:"You (part-time)",m:1,fee:0},{lvl:1,name:"Experienced manager",m:1.06,fee:.03},{lvl:2,name:"Star CEO",m:1.14,fee:.08,auto:true}];
+function mg(b){ if(!b.mg) b.mg={price:"normal",staff:"normal",mkt:"none",feats:[],rep:55,boss:0,dec:null,decAt:0,log:[]}; return b.mg; }
+function repMult(r){ return .7+r/100*.6; } // 0→0.7, 50→1.0, 100→1.3
+function mgmtMult(s,b){ const M=mg(b); const P=PRICE_SET[M.price]; let pm=P.m; if(M.price==="premium"&&M.rep<60) pm=.85;
+  const f=M.feats.reduce((t,i)=>t*(1+FEAT_GAIN[i]),1); return pm*STAFF_SET[M.staff].m*MKT_SET[M.mkt].m*repMult(M.rep)*BOSSES[M.boss].m*f; }
+function mgmtCost(s,b){ const T=BIZ[b.type], M=mg(b); return Math.round(T.price*MKT_SET[M.mkt].cost*lvlMult(b.level)**.5+T.price*BOSSES[M.boss].fee/YEAR_DAYS*lvlMult(b.level)**.5); }
+function bizSet(s,id,k,v){ const b=(s.empire||[]).find(x=>x.id===id); if(!b) return {ok:false}; const M=mg(b); const opts={price:PRICE_SET,staff:STAFF_SET,mkt:MKT_SET}[k]; if(!opts||!opts[v]) return {ok:false}; M[k]=v; dirty(s); return {ok:true}; }
+function featCost(b,i){ return Math.round(BIZ[b.type].price*FEAT_COST[i]/1000)*1000; }
+function buildFeat(s,id,i){ const b=(s.empire||[]).find(x=>x.id===id); if(!b) return {ok:false}; const M=mg(b); if(M.feats.includes(i)) return {ok:false,msg:"Already built."};
+  if(i>0&&!M.feats.includes(i-1)) return {ok:false,msg:"Build the one before it first."}; if(i>=b.level+1) return {ok:false,msg:`Needs level ${i} or higher.`};
+  const c=featCost(b,i); if(s.cash<c) return {ok:false,msg:"Not enough cash."}; s.cash-=c; spend(s,c,"invest"); b.cost=(b.cost||0)+c; M.feats.push(i); M.rep=Math.min(100,M.rep+4);
+  const F=BIZ_FEATURES[b.type][i]; mlog(s,b,`Built: ${F[0]}.`); if(rng(s)<.5) addPost(s,`${b.name} just added a ${F[0].toLowerCase()} 👀`); dirty(s); return {ok:true,name:F[0]}; }
+function hireBoss(s,id,lvl){ const b=(s.empire||[]).find(x=>x.id===id); if(!b||!BOSSES[lvl]) return {ok:false}; const M=mg(b); const fee=Math.round(BIZ[b.type].price*BOSSES[lvl].fee*.5/1000)*1000; if(s.cash<fee) return {ok:false,msg:"Not enough cash for the signing fee."};
+  s.cash-=fee; M.boss=lvl; mlog(s,b,`New boss: ${BOSSES[lvl].name}.`); dirty(s); return {ok:true,fee}; }
+function mlog(s,b,x){ const M=mg(b); M.log.unshift({t:s.t,x}); if(M.log.length>12) M.log.length=12; }
+// decisions: a fresh dilemma every few days for each business
+const DECISIONS=[
+ {t:"Big private booking",x:b=>`A tech company wants to book out the whole of ${b.name} for a night. They'll pay well, but regulars get turned away.`,
+  a:[["Take the booking",(s,b,e)=>{ const c=Math.round(e*2.5); s.cash+=c; mg(b).rep-=4; return `+£${fmt(c)}. Some regulars grumbled (−4 rep).`; }],["Keep it open for regulars",(s,b)=>{ mg(b).rep+=3; return "Regulars appreciated it (+3 rep)."; }]]},
+ {t:"Staff want a pay rise",x:b=>`The team at ${b.name} say they're underpaid and morale is dropping.`,
+  a:[["Give them 10% more",(s,b,e)=>{ const c=Math.round(e*1.5); s.cash-=c; mg(b).rep+=6; return `−£${fmt(c)}. Morale up (+6 rep).`; }],["Bonus instead",(s,b,e)=>{ const c=Math.round(e*.6); s.cash-=c; mg(b).rep+=2; return `−£${fmt(c)}. It helped a bit (+2 rep).`; }],["Say no",(s,b)=>{ mg(b).rep-=6; if(rng(s)<.3){ b.boost=(b.boost||[]); b.boost.push({m:.6,until:s.t+2*DAY}); return "Two staff quit and it's chaos for 2 days (−40% takings, −6 rep)."; } return "They're not happy (−6 rep)."; }]]},
+ {t:"Cheap supplier offer",x:b=>`A new supplier offers ${b.name} stock at 40% off. The quality is… unknown.`,
+  a:[["Switch supplier",(s,b)=>{ if(rng(s)<.6){ b.boost=(b.boost||[]); b.boost.push({m:1.2,until:s.t+7*DAY}); return "Great call — +20% margins for a week."; } mg(b).rep-=10; return "The quality was awful. Complaints everywhere (−10 rep)."; }],["Stay with the good stuff",(s,b)=>{ mg(b).rep+=1; return "Quality stays high (+1 rep)."; }]]},
+ {t:"Influencer wants it free",x:b=>`An influencer with 2m followers wants a free VIP experience at ${b.name} in exchange for a post.`,
+  a:[["Roll out the red carpet",(s,b,e)=>{ const c=Math.round(e*.3); s.cash-=c; if(rng(s)<.65){ b.boost=(b.boost||[]); b.boost.push({m:1.4,until:s.t+4*DAY}); gainFame(s,2); addPost(s,`Had the best night at ${b.name} 🔥🔥 go now`,{big:3}); return `−£${fmt(c)}. The post went viral: +40% for 4 days.`; } return `−£${fmt(c)}. The post flopped. Oh well.`; }],["Pay like everyone else",(s,b)=>"They left a passive-aggressive comment. Nobody cared."]]},
+ {t:"Inspection",x:b=>`An inspector found a few issues at ${b.name}. Fix them properly, or patch them up cheaply?`,
+  a:[["Fix it properly",(s,b,e)=>{ const c=Math.round(e*1.2); s.cash-=c; mg(b).rep+=3; return `−£${fmt(c)}. Passed with flying colours (+3 rep).`; }],["Cheap patch",(s,b,e)=>{ if(rng(s)<.35){ const f=Math.round(e*3); s.cash-=f; mg(b).rep-=8; return `Failed the re-check: £${fmt(f)} fine and bad press (−8 rep).`; } return "Got away with it… this time."; }]]},
+ {t:"A rival opens nearby",x:b=>`A flashy competitor just opened down the road from ${b.name}.`,
+  a:[["Price war (budget for a week)",(s,b)=>{ b.boost=(b.boost||[]); b.boost.push({m:.85,until:s.t+7*DAY}); mg(b).rep+=5; return "You held onto your customers. −15% takings for a week, +5 rep."; }],["Go upmarket",(s,b)=>{ if(mg(b).rep>=60){ b.boost=(b.boost||[]); b.boost.push({m:1.15,until:s.t+7*DAY}); return "Your reputation carried it: +15% for a week."; } b.boost=(b.boost||[]); b.boost.push({m:.75,until:s.t+5*DAY}); return "Customers weren't convinced: −25% for 5 days."; }],["Ignore them",(s,b)=>{ b.boost=(b.boost||[]); b.boost.push({m:.9,until:s.t+5*DAY}); return "Lost a few customers (−10% for 5 days)."; }]]},
+ {t:"Celebrity visit",x:b=>`A huge celebrity is coming to ${b.name} tonight. Their team wants total privacy.`,
+  a:[["Close it off for them",(s,b,e)=>{ const c=Math.round(e*1.8); s.cash+=c; gainFame(s,3); return `+£${fmt(c)} and +3 fame.`; }],["Tip off the press",(s,b)=>{ gainFame(s,6); mg(b).rep-=5; b.boost=(b.boost||[]); b.boost.push({m:1.3,until:s.t+3*DAY}); addPost(s,`Spotted at ${b.name} last night 📸`,{big:4}); return "Massive publicity (+30% for 3 days, +6 fame) — but word got out you leaked it (−5 rep)."; }]]},
+ {t:"Expansion opportunity",x:b=>`The unit next to ${b.name} is up for lease. Expanding would cost a fair bit.`,
+  a:[["Expand",(s,b,e)=>{ const c=Math.round(BIZ[b.type].price*.08); if(s.cash<c) return "You didn't have the cash."; s.cash-=c; b.base=(b.base||BIZ[b.type].profit)*1.08; return `−£${fmt(c)}. Permanently +8% capacity.`; }],["Not now",(s,b)=>"Maybe next time."]]},
+ {t:"Viral complaint",x:b=>`A customer's angry video about ${b.name} is doing the rounds online.`,
+  a:[["Public apology + refund",(s,b,e)=>{ const c=Math.round(e*.4); s.cash-=c; mg(b).rep+=2; return `−£${fmt(c)}. People respected that (+2 rep).`; }],["Fight back in the comments",(s,b)=>{ if(rng(s)<.3){ gainFame(s,3); return "Your reply was so funny it went viral (+3 fame)."; } mg(b).rep-=8; return "It made things worse (−8 rep)."; }],["Stay silent",(s,b)=>{ mg(b).rep-=3; return "It blew over (−3 rep)."; }]]}];
+function fmt(n){ return Math.round(n).toLocaleString("en-GB"); }
+function bizDecide(s,id,ci){ const b=(s.empire||[]).find(x=>x.id===id); if(!b) return {ok:false}; const M=mg(b); if(!M.dec) return {ok:false}; const D=DECISIONS[M.dec.k]; const A=D.a[ci]; if(!A) return {ok:false};
+  const e=Math.abs(bizExpected(s,b))||1000; const res=A[1](s,b,e); M.rep=clamp(M.rep,0,100); mlog(s,b,`${D.t}: ${A[0]} — ${res}`); M.dec=null; M.decAt=s.t+ri(s,2,4)*DAY; dirty(s); return {ok:true,res}; }
+function bizMgmtDaily(s){ for(const b of (s.empire||[])){ const M=mg(b); const P=PRICE_SET[M.price], St=STAFF_SET[M.staff];
+    M.rep=clamp(M.rep+P.rep+St.rep+(M.mkt==="big"?.2:0)+(50-M.rep)*.01,0,100);
+    const c=mgmtCost(s,b); if(c){ s.cash-=c; spend(s,c,"running"); }
+    if(!M.dec&&s.t>=(M.decAt||0)&&rng(s)<.45){ const k=ri(s,0,DECISIONS.length-1); M.dec={k,t:s.t};
+      if(BOSSES[M.boss].auto){ const D=DECISIONS[k]; const ci=0; const e=Math.abs(bizExpected(s,b))||1000; const res=D.a[ci][1](s,b,e); M.rep=clamp(M.rep,0,100); mlog(s,b,`Your CEO handled "${D.t}": ${res}`); M.dec=null; M.decAt=s.t+ri(s,2,4)*DAY; } } } }
+
+if(typeof module!=="undefined") module.exports={mg,mgmtMult,mgmtCost,bizSet,buildFeat,featCost,hireBoss,bizDecide,bizMgmtDaily,DECISIONS,BIZ_FEATURES,BIZ_UNIT,PRICE_SET,STAFF_SET,MKT_SET,BOSSES,fameEff,fameTier,FAME_TIERS,FAME_PERKS,hasPerk,appearanceFee,FAME_MAX,creator,startChannel,filmVideo,merchUp,merchWeekly,speakGig,speakFee,bookDeal,ytSubs,buildBoxes,boxIncome,boxCost,namingOffer,signNaming,concert,documentary,BIZ_TYPES,BIZ,buildBiz,genDeals,buyDeal,upgradeBiz,sellBiz,bizAct,bizValue,bizExpected,bizUpCost,empireValue,RIVALS,rivalsState,buyStake,sellStake,takeControl,stakeCost,stakesValue,floatGroup,groupCap,groupBase,tradeGroup,IPO_MIN,socialState,followers,answerDm,socialDaily,empireDaily,lvlMult,windowOpen,windowNext,worldClass,wcWilling,ELITE_CLUBS,shopClub,clubValue,residence,taxRate,TAX_BY_CITY,playCup,cupReady,cupTie,CUP_ROUNDS,COACHES,hireCoach,coachWage,upgradeFac,facCost,FACILITY_LV,shopIncome,findSponsor,signSponsor,TOURS,preseasonTour,kitLaunch,CITY_INFO,cityDo,cityMult,cityActs,candidates,staffWage,TRAITS,trait,staffSpeed,staffFix,makeCandidate,CLUBS,clubPrice,TIER_CAP,SIGN_LIMIT,answerAsk,mgrIdeas,mgrAsk,buyPlayer,sellOffer,playerValue,bestXI,acceptBid,rejectBid,clubFix,genMarket,TACTICS,clubEliteScore,mgrNote,buyTickets,lottoDraw,nextDrawDay,LOTTO_PRICE,LOTTO_MAX,LOTTO_N,LOTTO_PICK,LOTTO_PRIZES,sellGarage,businessValue,garageValue,addCrew,removeCrew,workerSpeed,buyCar,driveCar,trackDay,restoreCar,sellCar,buyYacht,yachtParty,yachtCruise,sellYacht,buyHorse,enterRace,studHorse,sellHorse,buyClub,signPlayer,sellPlayer,expandStadium,sellClub,luxValue,clubWages,travel,buyJet,holiday,flightMins,genListings,buyProperty,setPropMode,renovate,sellProperty,buyFreehold,buyInvest,sellInvest,investTotal,invValue,loanCheck,workProfitPerWeek,moneyIO,worth,yearEnd,newGame,migrate,advance,accept,decline,passOn,startJob,jumpIn,stepBack,completeJob,orderParts,partsNeeded,canStart,currentPopup,payBill,delayBill,dismissInfo,buyKit,buyLift,buyCert,runCampaign,hire,fire,openGarage,franchiseOut,takeLoan,health,stars,estimate,catchUp,JOB,LOCS,DAY,G,allJobs,stockCount,weekSummary,nightFF};
 
 </script>
 <script>
@@ -2110,11 +2179,38 @@ function worldTab(){
 /* ---------- Phase 8: Empire ---------- */
 const shortMoney=n=>{ const a=Math.abs(n), sg=n<0?"−":""; return a>=1e9?`${sg}£${(a/1e9).toFixed(a>=1e10?1:2)}bn`:a>=1e6?`${sg}£${(a/1e6).toFixed(a>=1e8?0:1)}m`:a>=1e4?`${sg}£${Math.round(a/1e3)}k`:money(n); };
 function bizSpark(h){ if(!h||h.length<2) return ""; const max=Math.max(...h.map(Math.abs),1); return `<div class="spark">${h.slice(-14).map(v=>`<i class="${v<0?"neg":""}" style="height:${Math.max(6,Math.abs(v)/max*100)}%"></i>`).join("")}</div>`; }
-function empireTab(){ const E=S.empire||[]; const tot=E.reduce((t,b)=>t+(b.today||0),0), val=empireValue(S);
+
+const BIZ_SPEND={valet:25,tyres:120,vans:90,restaurant:70,gym:15,dealer:3000,hire:80,nightclub:45,distributor:300,hotel:350,developer:60000,bank:4000,carbrand:60000,airline:140};
+let bizOpen=null;
+function bizPage(b){ const T=BIZ[b.type], M=mg(b); const exp=bizExpected(S,b), v=bizValue(S,b); const units=Math.max(1,Math.round(exp/(BIZ_SPEND[b.type]||100)));
+  const segRow=(k,opts,cur)=>`<div class="seg" style="grid-template-columns:repeat(3,1fr)" role="radiogroup">${Object.entries(opts).map(([id,o])=>`<button type="button" role="radio" data-bset="${b.id}:${k}:${id}" aria-selected="${cur===id}">${o.name}</button>`).join("")}</div><div class="muted" style="font-size:12px">${opts[cur].desc}${k==="mkt"&&opts[cur].cost?` About ${shortMoney(Math.round(T.price*opts[cur].cost*lvlMult(b.level)**.5))}/night.`:""}</div>`;
+  const repCls=M.rep>=70?"good":M.rep<40?"bad":"";
+  const D=M.dec&&DECISIONS[M.dec.k];
+  return `<div class="sec"><button class="linkbtn" type="button" id="bizback" style="margin-bottom:8px">‹ All businesses</button>
+  <div class="job"><div class="ig" style="border-radius:0">${img(T.art,T.name)}<div class="call" style="left:4%;top:8%"><span class="lb"><b>${esc(b.name)}</b> · ${esc(CITIES[b.city].name)}</span></div></div>
+   <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="sechead"><span class="eyebrow">${T.name} · level ${b.level}/5</span><span class="eyebrow">Boss: ${BOSSES[M.boss].name}</span></div>
+    <div><div class="sechead" style="font-size:13px"><span>Reputation</span><span class="num ${repCls}">${Math.round(M.rep)}/100</span></div><div class="bar" style="height:8px;margin-top:4px"><i style="width:${M.rep}%"></i></div><div class="muted" style="font-size:12px">Reputation changes profit by ${M.rep>=50?"+":"−"}${Math.round(Math.abs(repMult(M.rep)-1)*100)}%. Generous staffing, budget prices and new features raise it.</div></div>
+    <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><span class="eyebrow">Last night</span><span class="v ${(b.today||0)>=0?"good":"bad"}" style="font-size:16px">${b.today!=null?shortMoney(b.today):"—"}</span></div><div class="tile"><span class="eyebrow">Usual night</span><span class="v" style="font-size:16px">${shortMoney(exp)}</span></div><div class="tile"><span class="eyebrow">${BIZ_UNIT[b.type]||"customers"} a night</span><span class="v" style="font-size:16px">${fmtN(units)}</span></div><div class="tile"><span class="eyebrow">Worth</span><span class="v goldc" style="font-size:16px">${shortMoney(v)}</span></div></div>
+    ${bizSpark(b.hist)}
+   </div></div>
+  ${D?`<div class="card decision"><span class="pill gold">Decision needed</span><h3>${esc(D.t)}</h3><div style="font-size:14px">${esc(D.x(b))}</div><div class="list" style="gap:6px">${D.a.map((A,i)=>`<button class="btn small ${i?"ghost":""}" type="button" data-bdec="${b.id}:${i}" style="text-align:left">${esc(A[0])}</button>`).join("")}</div></div>`:""}
+  <div class="card"><h3>Prices</h3>${segRow("price",PRICE_SET,M.price)}<h3 style="margin-top:6px">Staffing</h3>${segRow("staff",STAFF_SET,M.staff)}<h3 style="margin-top:6px">Marketing</h3>${segRow("mkt",MKT_SET,M.mkt)}</div>
+  <div class="card"><h3>Build it out</h3><div class="muted" style="font-size:12px">Each feature permanently raises takings. Higher business levels unlock more.</div>
+   <div class="list" style="gap:6px">${BIZ_FEATURES[b.type].map((F,i)=>{ const own=M.feats.includes(i); const locked=i>b.level; const prev=i>0&&!M.feats.includes(i-1); const c=featCost(b,i);
+     return `<div class="line" style="align-items:center;gap:8px;${own?"":locked||prev?"opacity:.55":""}"><span>${own?"✅":locked?"🔒":"🔨"} <b>${esc(F[0])}</b><br><span class="muted" style="font-size:12px">+${Math.round(FEAT_GAIN[i]*100)}% takings, +4 reputation${locked?` · needs level ${i}`:""}</span></span>${own?`<span class="chip g">Built</span>`:`<button class="btn small ${prev||locked?"ghost":""}" type="button" data-bfeat="${b.id}:${i}" ${locked||prev||S.cash<c?"disabled":""}>${shortMoney(c)}</button>`}</div>`; }).join("")}</div></div>
+  <div class="card"><h3>Who runs it</h3><div class="list" style="gap:6px">${BOSSES.map(B=>`<div class="line" style="align-items:center;gap:8px"><span><b>${B.name}</b><br><span class="muted" style="font-size:12px">${B.lvl===0?"No extra cost. You make every decision.":`+${Math.round((B.m-1)*100)}% takings · ${shortMoney(Math.round(BIZ[b.type].price*B.fee/YEAR_DAYS*lvlMult(b.level)**.5))}/night${B.auto?" · makes decisions for you":""}`}</span></span>${M.boss===B.lvl?`<span class="chip g">In charge</span>`:`<button class="btn small ghost" type="button" data-bboss="${b.id}:${B.lvl}">${B.lvl?`Hire · ${shortMoney(Math.round(BIZ[b.type].price*B.fee*.5/1000)*1000)}`:"Run it yourself"}</button>`}</div>`).join("")}</div></div>
+  <div class="card"><h3>Big moves</h3><div class="list">${T.acts.map(A=>{ const cd=(b.cool||{})[A.id]||0; return `<div class="line" style="align-items:center;gap:8px"><span><b>${A.name}</b><br><span class="muted" style="font-size:12px">${A.desc}</span></span><button class="btn small ghost" type="button" data-bact="${b.id}:${A.id}" ${cd>S.t||S.cash<A.cost?"disabled":""}>${cd>S.t?`Again ${when(S,cd)}`:shortMoney(A.cost)}</button></div>`; }).join("")}</div></div>
+  <div class="card"><div class="chips">${b.level<5?`<button class="btn small" type="button" data-bup="${b.id}" ${S.cash<bizUpCost(b)?"disabled":""}>Upgrade to level ${b.level+1} · ${shortMoney(bizUpCost(b))}</button>`:`<span class="chip g">Max level</span>`}<button class="linkbtn" type="button" data-bsell="${b.id}">Sell · ${shortMoney(v*.97)}</button></div></div>
+  ${M.log.length?`<div class="card"><h3>What's been happening</h3>${M.log.slice(0,8).map(l=>`<div style="font-size:12.5px"><span class="muted">${agoStr(l.t)} ago</span> · ${esc(l.x)}</div>`).join("")}</div>`:""}
+  </div>`; }
+function empireTab(){ const E=S.empire||[]; if(bizOpen!=null){ const ob=E.find(x=>x.id===bizOpen); if(ob) return bizPage(ob); bizOpen=null; } const tot=E.reduce((t,b)=>t+(b.today||0),0), val=empireValue(S);
   const head=`<div class="tiles" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px"><div class="tile"><span class="eyebrow">Businesses</span><span class="v">${E.length}</span></div><div class="tile"><span class="eyebrow">Last night</span><span class="v ${tot>=0?"good":"bad"}" style="font-size:16px">${shortMoney(tot)}</span></div><div class="tile"><span class="eyebrow">Worth</span><span class="v goldc" style="font-size:16px">${shortMoney(val)}</span></div></div>`;
   if(!E.length) return head+`<div class="card" style="margin-top:10px"><h3>Build your empire</h3><div class="muted" style="font-size:13px">Garages are just the start. Open or take over car washes, restaurants, nightclubs, hotels, a bank — even your own car brand. Each one earns every night, can be upgraded, and has its own big moves. Start one in <b>Deals</b>.</div><div><button class="btn small" type="button" data-bseg="deals">See deals</button></div></div>`;
   return head+`<div class="list" style="margin-top:10px">${E.map(b=>{ const T=BIZ[b.type]; const v=bizValue(S,b); const up=b.level<5?bizUpCost(b):0; const boosted=(b.boost||[]).filter(x=>x.until>S.t);
-    return `<div class="job"><div class="ig" style="border-radius:0">${img(T.art,T.name)}<div class="call" style="left:4%;top:8%"><span class="lb"><b>${esc(b.name)}</b> · ${esc(CITIES[b.city].name)}</span></div></div><div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+    const M=mg(b);
+    return `<div class="job"><button type="button" class="ig bizopen" data-bopen="${b.id}" style="border-radius:0;padding:0;border:0;display:block;width:100%;cursor:pointer">${img(T.art,T.name)}<div class="call" style="left:4%;top:8%"><span class="lb"><b>${esc(b.name)}</b> · ${esc(CITIES[b.city].name)}</span></div>${M.dec?`<div class="call" style="right:4%;top:8%"><span class="lb" style="border-color:#e0a030;color:#f0b84a">⚠ Decision needed</span></div>`:""}</button><div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn small" type="button" data-bopen="${b.id}">Manage ${esc(b.name.split(" ")[0])} ›</button>
       <div class="sechead"><span class="eyebrow">${T.name} · level ${b.level}/5${b.mod&&b.mod<1?" · struggling":""}</span><span class="num ${(b.today||0)>=0?"good":"bad"}">${b.today!=null?(b.today>=0?"+":"")+shortMoney(b.today)+" last night":"Opens tonight"}</span></div>
       ${bizSpark(b.hist)}
       <div class="chips"><span class="chip">Avg ~${shortMoney(bizExpected(S,b))}/night</span><span class="chip g">Worth ${shortMoney(v)}</span>${boosted.map(x=>`<span class="chip ${x.m>=1?"g":"b"}">${x.m>=1?"+":"−"}${Math.round(Math.abs(x.m-1)*100)}% until ${when(S,x.until)}</span>`).join("")}</div>
@@ -2674,6 +2770,7 @@ document.addEventListener("click",ev=>{
   if(t.id==="signnaming"){ const r=signNaming(S); done(r.ok?"Naming rights sold.":"","cash"); return; }
   if(t.id==="concert"){ const r=concert(S); done(r.ok?(r.good?`Sell-out! ${r.act} · +${money(r.net)} profit`:`${r.act} didn't sell well · ${money(r.net)}`):r.msg,r.ok&&r.good?"cash":"buzz"); return; }
   if(t.id==="docu"){ const r=documentary(S); done(r.ok?`Documentary signed: +${money(r.fee)}`:r.msg,r.ok?"cash":"buzz"); return; }
+  if(t.id==="bizback"){ bizOpen=null; render(); window.scrollTo(0,0); return; }
   if(t.id==="kickoff"){ const m=playMatch(S); if(m){ sheet={type:"match",m,shown:0}; matchTick(); } done(null,"whistle"); return; }
   if(t.id==="acceptbid"){ if(t.dataset.armed){ const r=acceptBid(S); done(r.ok?`Club sold for ${money(r.v)}!`:"",r.ok?"cash":"buzz"); } else { t.dataset.armed="1"; t.textContent="Tap again to sell"; setTimeout(()=>{ if(t.isConnected) delete t.dataset.armed; },3000); } return; }
   if(t.id==="shopclub"){ const r=shopClub(S); if(r.ok&&!r.none) window.scrollTo(0,0); done(r.ok?(r.none?`No serious interest this time (fee ${money(r.fee)}). Win more and try again.`:`${r.offer.who} offered ${money(r.offer.amount)}!`):r.msg,r.ok&&!r.none?"cash":"buzz"); return; }
@@ -2734,9 +2831,14 @@ document.addEventListener("click",ev=>{
   if(d.lift){ const r=buyLift(S,+d.lift,false); done(r.ok?"New lift fitted.":r.msg,r.ok?"gun":"buzz"); return; }
   if(d.liftfin){ const r=buyLift(S,+d.liftfin,true); done(r.ok?"New lift fitted on finance.":r.msg,r.ok?"gun":"buzz"); return; }
   if(d.dev){ const m=devDo(d.dev); done(m,"ping"); return; }
-  if(d.bseg){ bSeg=d.bseg; if(tab!=="home"){ tab="home"; } hSeg="biz"; render(); return; }
+  if(d.bseg){ bSeg=d.bseg; bizOpen=null; if(tab!=="home"){ tab="home"; } hSeg="biz"; render(); return; }
   if(d.build){ const r=buildBiz(S,d.build); if(r.ok) bSeg="empire"; done(r.ok?`${r.b.name} is open!`:r.msg,r.ok?"cash":"buzz"); return; }
   if(d.deal){ const r=buyDeal(S,+d.deal); if(r.ok) bSeg="empire"; done(r.ok?`${r.b.name} is yours.`:r.msg,r.ok?"cash":"buzz"); return; }
+  if(d.bopen){ bizOpen=+d.bopen; render(); window.scrollTo(0,0); return; }
+  if(d.bset){ const [id,k,v]=d.bset.split(":"); bizSet(S,+id,k,v); done(); return; }
+  if(d.bfeat){ const [id,i]=d.bfeat.split(":"); const r=buildFeat(S,+id,+i); done(r.ok?`Built: ${r.name}`:r.msg,r.ok?"gun":"buzz"); return; }
+  if(d.bboss){ const [id,l]=d.bboss.split(":"); const r=hireBoss(S,+id,+l); done(r.ok?"New boss in charge.":r.msg,r.ok?"cash":"buzz"); return; }
+  if(d.bdec){ const [id,i]=d.bdec.split(":"); const r=bizDecide(S,+id,+i); if(r.ok) S.inbox.push({id:S.nextId++,type:"info",title:"Decision made",text:r.res,tone:"neutral",showAt:S.t}); done(); return; }
   if(d.bup){ const r=upgradeBiz(S,+d.bup); done(r.ok?`${r.b.name} is now level ${r.b.level}.`:r.msg,r.ok?"gun":"buzz"); return; }
   if(d.bsell){ if(t.dataset.armed){ const r=sellBiz(S,+d.bsell); done(r.ok?`Sold for ${money(r.v)}.`:"",r.ok?"cash":"buzz"); } else { t.dataset.armed="1"; t.textContent="Tap again to sell"; setTimeout(()=>{ if(t.isConnected) delete t.dataset.armed; },3000); } return; }
   if(d.bact){ const [id,a]=d.bact.split(":"); const r=bizAct(S,+id,a); if(r.ok) S.inbox.push({id:S.nextId++,type:"info",title:r.name,text:r.msg,tone:r.tone,showAt:S.t}); done(r.ok?null:r.msg,r.ok?(r.tone==="bad"?"buzz":"cash"):"buzz"); return; }
