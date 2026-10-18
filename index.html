@@ -2189,7 +2189,7 @@ function tabBar(){
   const newN=S.garages.reduce((t,g)=>t+(managed(g)?0:g.board.length),0), ready=allJobs(S).filter(({g,j})=>!managed(g)&&j.status==="done").length, short=Object.keys(partsNeeded(S,true).short).length;
   const so=socialState(S); const dmN=so.dms.filter(d=>!d.read).length;
   const b={jobs:ready?`<span class="badge g">${ready}</span>`:newN?`<span class="badge">${newN}</span>`:"", parts:short?`<span class="badge g">${short}</span>`:"", social:dmN?`<span class="badge">${dmN}</span>`:""};
-  return `<nav class="tabbar" aria-label="Main"><div class="wrap" role="tablist">${[["home","Home"],["jobs","Jobs"],["parts","Parts"],["team","Team"],["garage","Garages"],["social","Social"]].map(([k,l])=>`<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${tab===k}">${ICON[k]}${l}${b[k]||""}</button>`).join("")}</div></nav>`;
+  return `<nav class="tabbar" aria-label="Main"><div class="wrap" role="tablist">${[["home","Home"],["jobs","Jobs"],["parts","Parts"],["team","Team"],["garage","Business"],["social","Social"]].map(([k,l])=>`<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${tab===k}">${ICON[k]}${l}${b[k]||""}</button>`).join("")}</div></nav>`;
 }
 function switcher(){
   if(S.garages.length<2) return "";
@@ -2203,9 +2203,10 @@ function coach(where){
 
 /* ---------- home ---------- */
 function homeTab(){
-  const hs=[["overview",S.at==="air"?"✈ In the air":CITIES[S.at].name],["biz","Business"],["money","Money"],["world","Travel"],["life","Life"]];
+  const hs=[["overview",S.at==="air"?"✈ In the air":CITIES[S.at].name],["money","Money"],["world","Travel"],["life","Life"]];
   const seg=`<div class="seg hseg" role="tablist">${hs.map(([k,l])=>`<button type="button" role="tab" data-hseg="${k}" aria-selected="${hSeg===k}">${l}</button>`).join("")}</div>`;
-  if(hSeg==="biz"){ const bs=`<div class="seg" style="grid-template-columns:repeat(4,1fr);margin-top:10px" role="tablist">${[["garages","Garages"],["empire","Empire"],["deals","Deals"],["stocks","Stocks"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}">${l}</button>`).join("")}</div>`;
+  if(hSeg==="biz"){ hSeg="overview"; tab="garage"; return garageTab(); }
+  if(false){ const bs=`<div class="seg" style="grid-template-columns:repeat(4,1fr);margin-top:10px" role="tablist">${[["garages","Garages"],["empire","Empire"],["deals","Deals"],["stocks","Stocks"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}">${l}</button>`).join("")}</div>`;
     return `<div class="sec">${seg}${bs}${bSeg==="empire"?empireTab():bSeg==="deals"?dealsTab():bSeg==="stocks"?stocksTab():businessesList()}</div>`; }
   if(hSeg==="world") return `<div class="sec">${seg}${worldTab()}</div>`;
   if(hSeg==="life") return `<div class="sec">${seg}${lifeTab()}</div>`;
@@ -2474,7 +2475,7 @@ function overviewTab(){
   const ready=allJobs(S).filter(({g,j})=>!managed(g)&&j.status==="done");
   const working=g.jobs.filter(j=>j.status==="working").length;
   return `<div class="sec">${coach("home")}
-    ${S.garages.length>1?`<button class="curbiz" type="button" data-hseg="biz"><span class="eyebrow">Working on</span><b>${esc(g.name)}</b><span class="${bizStatus(g)[1]}">${bizStatus(g)[0]}</span><span class="muted">Change ›</span></button>`:""}
+    ${S.garages.length>1?`<button class="curbiz" type="button" data-goto="garage"><span class="eyebrow">Working on</span><b>${esc(g.name)}</b><span class="${bizStatus(g)[1]}">${bizStatus(g)[0]}</span><span class="muted">Change ›</span></button>`:""}
     <div class="ig">${img(g.franchise?"staff_franchise":garageArt(g),g.name)}
       <div class="call" style="left:44%;top:16%"><span class="dot"></span><span class="ln"></span><span class="lb">Bays · <b>${working}/${g.bays}</b> working</span></div>
       <div class="call" style="left:3%;top:46%;flex-direction:row-reverse"><span class="dot"></span><span class="ln"></span><span class="lb">Team · <b>${g.staff.length+1}</b></span></div>
@@ -2658,6 +2659,10 @@ function kitCard(g,e,isCert){
 function manageSeg(g){ const run=dailyRunning(S,g); const L=LOCS[g.loc]; return `${S.garages.indexOf(g)>0?sellCards(g):`<div class="sec"><div class="card"><h3>${esc(g.name)} is your HQ</h3><div class="muted" style="font-size:13px">Your first garage can't be sold or franchised.</div></div></div>`}
   <div class="sec"><div class="card"><h3>Running costs · ${esc(L.name)}</h3><div class="kv">${run.map(l=>`<span>${l[0]}</span><span class="num">£${l[1]}/day</span>`).join("")}<span>Rent</span><span class="num">£${L.rent}/wk</span><span>Business rates</span><span class="num">£${L.rates}/wk</span><span>Utilities</span><span class="num">£${L.utils}/wk</span><span>Insurance</span><span class="num">£${L.ins}/wk</span><span>Staff wages</span><span class="num">£${g.staff.reduce((t,x)=>t+ROLES[x.role].wage,0)}/wk</span><span>All weekly fixed costs</span><span class="num goldc">${money(weeklyFixed(S))}/wk</span></div></div></div>`; }
 function garageTab(){
+  const bs=`<div class="sec"><div class="seg" style="grid-template-columns:repeat(4,1fr)" role="tablist">${[["garages","Garages"],["empire","Empire"],["deals","Deals"],["stocks","Stocks"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}">${l}</button>`).join("")}</div></div>`;
+  if(bSeg!=="garages") return bs+`<div class="sec">${bSeg==="empire"?empireTab():bSeg==="deals"?dealsTab():stocksTab()}</div>`;
+  return bs+garageInner(); }
+function garageInner(){
   const g=curG();
   const seg=`<div class="sec"><div class="sechead"><h2>${esc(g.name)}</h2><span class="eyebrow">${esc(LOCS[g.loc].name)}${g.franchise?" · franchise":managed(g)?" · managed":""}</span></div><div class="seg" style="grid-template-columns:repeat(3,1fr)" role="tablist">${[["workshop","Workshop"],["business","Business"],["manage","Manage"]].map(([k,l])=>`<button type="button" role="tab" data-gseg="${k}" aria-selected="${gSeg===k}">${l}</button>`).join("")}</div></div>`;
   const body=gSeg==="business"?businessSeg():gSeg==="manage"?manageSeg(g):(g.franchise?"":bayCard(g))+workshopSeg();
@@ -3065,7 +3070,7 @@ document.addEventListener("click",ev=>{
   if(d.liftfin){ const r=buyLift(S,+d.liftfin,true); done(r.ok?"New lift fitted on finance.":r.msg,r.ok?"gun":"buzz"); return; }
   if(d.gift&&S.devUnlocked){ lastGift=makeGift(+d.gift); render(); return; }
   if(d.dev&&S.devUnlocked){ const m=devDo(d.dev); done(m,"ping"); return; }
-  if(d.bseg){ bSeg=d.bseg; bizOpen=null; if(tab!=="home"){ tab="home"; } hSeg="biz"; render(); return; }
+  if(d.bseg){ bSeg=d.bseg; bizOpen=null; tab="garage"; render(); return; }
   if(d.build){ const r=buildBiz(S,d.build); if(r.ok) bSeg="empire"; done(r.ok?`${r.b.name} is open!`:r.msg,r.ok?"cash":"buzz"); return; }
   if(d.deal){ const r=buyDeal(S,+d.deal); if(r.ok) bSeg="empire"; done(r.ok?`${r.b.name} is yours.`:r.msg,r.ok?"cash":"buzz"); return; }
   if(d.mech){ const [id,act,a1,a2]=d.mech.split("|"); const n=v=>v===""?undefined:(isNaN(+v)?v:+v); const r=mechAction(S,+id,act,n(a1),n(a2)); done(r&&r.msg?r.msg:(r&&r.ok===false&&r.msg)?r.msg:null,r&&r.ok?null:"buzz"); return; }
