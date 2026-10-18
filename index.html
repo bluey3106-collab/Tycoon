@@ -72,11 +72,11 @@ h3{font-size:15px;font-weight:650}
 .top{position:fixed;left:0;right:0;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 .top .wrap{display:flex;align-items:center;gap:10px;padding-block:8px}
 .clk{font-family:var(--mono);font-weight:700;font-size:22px;letter-spacing:.02em}
-.clkwrap{min-width:0;flex:none}
+.clkwrap{min-width:0;flex:0 1 auto;overflow:hidden}
 .ctrl{display:flex;gap:4px;margin-left:4px}
 .ctrl button{background:var(--panel);border:1px solid var(--line);border-radius:10px;height:32px;min-width:36px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 8px}
 .ctrl button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold2)}
-.money{margin-left:auto;text-align:right;min-width:0;flex:0 1 auto}
+.money{margin-left:auto;text-align:right;flex:none;white-space:nowrap}
 .ctrl{flex:none}
 .cash{font-family:var(--mono);font-weight:700;font-size:20px;color:var(--gold)}
 .cash.neg{color:var(--bad)}
@@ -1908,7 +1908,7 @@ function live(){
   if(!S) return;
   const set=(sel,v)=>{ for(const el of document.querySelectorAll(sel)) if(el.textContent!==v) el.textContent=v; };
   set('[data-live="clock"]',clock(S.t));
-  set('[data-live="day"]',`${weekday(S.t)} · Day ${dayNo(S.t)}${nightFF(S)?" · ⏩ night":""}`); set('[data-live="where"]',whereStr());
+  set('[data-live="day"]',`${weekday(S.t)} · Day ${dayNo(S.t)}`); set('[data-live="spd"]',nightFF(S)&&!S.paused?"⏩":`${S.speed}×`); set('[data-live="where"]',whereStr());
   const c=document.querySelector('[data-live="cash"]'); if(c){ const v=moneyTop(S.cash); if(c.textContent!==v) c.textContent=v; c.classList.toggle("neg",S.cash<0); }
   const e=document.querySelector('[data-live="energy"]'); if(e){ e.style.width=S.energy+"%"; e.classList.toggle("low",S.energy<20); }
   set('[data-live="energyN"]',`${Math.round(S.energy)}%`);
@@ -1945,7 +1945,7 @@ function topBar(){
   const st=stars(S);
   return `<header class="top"><div class="wrap">
     <div class="clkwrap"><div class="clk" data-live="clock">${clock(S.t)}</div><div class="eyebrow" data-live="day">${weekday(S.t)} · Day ${dayNo(S.t)}</div><button class="wherebtn" type="button" data-goto="home" data-hs="world" data-live="where">${whereStr()}</button></div>
-    <div class="ctrl" role="group" aria-label="Game speed"><button type="button" id="pp" aria-label="${S.paused?"Play":"Pause"}">${S.paused?ICON.play:ICON.pause}</button><button type="button" id="spd" aria-label="Change speed">${S.speed}×</button><button type="button" data-goto="home" data-hs="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+    <div class="ctrl" role="group" aria-label="Game speed"><button type="button" id="pp" aria-label="${S.paused?"Play":"Pause"}">${S.paused?ICON.play:ICON.pause}</button><button type="button" id="spd" aria-label="Change speed" data-live="spd">${nightFF(S)&&!S.paused?"⏩":S.speed+"×"}</button><button type="button" data-goto="home" data-hs="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
     <div class="money"><div class="cash ${S.cash<0?"neg":""}" data-live="cash" title="${money(S.cash)}">${moneyTop(S.cash)}</div><div class="starsv">${st.toFixed(1)} ${starStr(st)}</div></div>
   </div></header>`;
 }
