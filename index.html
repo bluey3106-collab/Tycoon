@@ -421,6 +421,20 @@ textarea{width:100%;min-height:70px;background:var(--panel2);border:1px solid va
 .charbtn img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}.charbtn span{padding:6px;font-weight:650;font-size:13px}
 .card.pitch{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
 .v3d{cursor:default}.v3dx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:3}
+.roomgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.room{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column}
+.room>img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
+.room.unbuilt>img{filter:grayscale(.85) brightness(.5)}
+.room .rin{padding:9px;display:flex;flex-direction:column;gap:6px;flex:1}.room .rin .btn{margin-top:auto}
+.lvdots{display:flex;gap:3px}.lvdots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.lvdots i.on{background:var(--gold)}
+.gallery{display:flex;gap:3px;flex-wrap:wrap}.gallery img{width:38px;height:26px;object-fit:cover;border-radius:4px}
+.rivalcard{display:flex;gap:12px;align-items:center;border-color:rgba(229,125,99,.5)}
+.rvpic{width:86px;height:112px;flex:none;border-radius:14px;overflow:hidden;border:2px solid var(--bad)}.rvpic img{width:100%;height:100%;object-fit:cover}
+.vsbar{height:8px;border-radius:5px;background:var(--bad);overflow:hidden;margin-top:6px}.vsbar i{display:block;height:100%;background:var(--good)}
+.flightmap{width:100%;display:block;border-radius:12px;margin-top:10px}
+.mlbl{font:600 7.5px var(--mono,monospace);fill:#e8e2d2}
+.card.flight{display:flex;flex-direction:column;gap:8px;padding-top:0;overflow:hidden}
+.card.flight .cashero{margin:0 -14px}
 </style>
 <div id="app"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -1311,6 +1325,9 @@ function socialPost(s,kind,c){ const me=s.name, co=s.garage; const P={
   lottery:()=>[`SOMEONE WON £${Math.round(c.amt/1e6)}M ON THE LOTTERY AND IT'S ${me.toUpperCase()} 😭😭`,`${me} already rich and now wins the lottery?? Life isn't fair.`],
   car:()=>[`Spotted ${me} in a brand new ${c.name.toLowerCase()} 🤯`,`${me}'s new ${c.name.toLowerCase()} is filthy. 🔥`],
   sold:()=>[`💰 ${me} just sold ${c.name} to a ${c.who.toLowerCase()} for £${Math.round(c.amt).toLocaleString("en-GB")}.`,`${c.who} paying ${me} £${Math.round(c.amt/1e6*10)/10}m for ${c.name}?? Big move.`],
+  party:()=>[`The party at ${me}'s mansion last night was INSANE 🥂🎉`,`Everyone who's anyone was at ${me}'s place last night.`],
+  rival:()=>[`${c.who} just called ${me} "a mechanic who got lucky". Beef?? 👀🍿`,`${c.who} vs ${me} is the best feud in business right now.`],
+  rivalwin:()=>[`🚨 ${me} has TAKEN OVER ${c.co}. ${c.who} is done. Ruthless.`,`${me} just ended ${c.who}'s whole career 😳`],
   scandal:()=>[`🚨 FA confirms investigation into ${me} over illegal betting on football. Yikes.`,`A club owner betting on football?? ${me} might be finished 😬`],
   casino:()=>[`${me} just won ${money0(c.amt)} at the casino 🎰🤯`,`Saw ${me} at the high-roller tables tonight. Absolute madness.`],
   city:()=>[`${me} spotted in ${c.city} — ${c.act.toLowerCase()} 📸`,`Guess who's in ${c.city}? ${me}. ${c.act}.`]};
@@ -1637,7 +1654,7 @@ function propWeekly(s,lines){
 function jetFor(s,to){ const mins=flightMins(s.at,to); return (s.jets||[]).map(id=>JETS.find(j=>j.id===id)).filter(j=>j&&mins<=j.range).sort((a,b)=>a.speed-b.speed)[0]||null; }
 function travel(s,to,mode){
   if(s.at==="air") return {ok:false,msg:"You're already in the air."}; if(s.at===to) return {ok:false};
-  const mins=flightMins(s.at,to); let cost=0, time=mins;
+  const mins=Math.round(flightMins(s.at,to)*(1-[0,.1,.15,.2][(s.mansion&&s.mansion.rooms.heli)||0])); let cost=0, time=mins;
   if(mode==="jet"){ const j=jetFor(s,to); if(!j) return {ok:false,msg:"None of your jets can fly that far."}; cost=j.perFlight*(s.charter?2:1); time=Math.round(mins*j.speed); }
   else cost=ticketCost(s.at,to)*(mode==="business"?3:1);
   if(s.cash<cost) return {ok:false,msg:"Not enough cash."};
@@ -1862,7 +1879,7 @@ function lottoDraw(s){
 }
 function endOfDay(s){
   if(s.log&&s.log.length>120) s.log.length=120;
-  propDaily(s); investDaily(s); luxDaily(s); storyDaily(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
+  propDaily(s); investDaily(s); luxDaily(s); storyDaily(s); mansionDaily(s); if(weekday(s.t)==="Mon") rivalWeek(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
   let running=0; for(const g of s.garages){ if(g.franchise){ franchiseDay(s,g); continue; } running+=dailyRunning(s,g).reduce((t,l)=>t+l[1],0); }
   s.cash-=running; spend(s,running,"running");
   const r={day:dayNo(s.t-1),...s.today,rent:s.today.rent||0,running,type:s.dayType,garages:s.garages.map(g=>({name:g.name,revenue:g.today.revenue,jobs:g.today.jobs,franchise:!!g.franchise}))}; r.profit=r.revenue+(r.rent||0)-r.cogs-r.overheads;
@@ -1915,7 +1932,7 @@ function worth(s){
   const stockVal=Math.round(s.stock.reduce((t,b)=>t+b.qty*b.unit,0));
   const kit=(s.assets||[]).reduce((t,a)=>t+assetValue(s,a),0);
   const lux=luxValue(s); const propVal=Math.round(s.props.reduce((t,p)=>t+p.value,0)), mort=Math.round(s.props.reduce((t,p)=>t+p.mortgage,0)), inv=Math.round(investTotal(s));
-  const own=[["Cash in the bank",Math.max(0,s.cash)],["Property",propVal],["Investments",inv],["Cars, yachts, horses & club",lux],...(s.ipo?[[`Your listed group (${Math.round(s.ipo.held*100)}%)`,Math.round(groupCap(s)*s.ipo.held)]]:[["Your garages",businessValue(s)],["Empire businesses",empireValue(s)]]),["Shares in other companies",Math.round(stakesValue(s))],["Parts in stock",stockVal],["Kit, lifts & fit-outs",kit],["Rent deposits",s.deposits||0]].filter(x=>x[1]>0||x[0]==="Cash in the bank");
+  const own=[["Cash in the bank",Math.max(0,s.cash)],["Property",propVal],["Investments",inv],["Cars, yachts, horses & club",lux],...(s.ipo?[[`Your listed group (${Math.round(s.ipo.held*100)}%)`,Math.round(groupCap(s)*s.ipo.held)]]:[["Your garages",businessValue(s)],["Empire businesses",empireValue(s)]]),["Shares in other companies",Math.round(stakesValue(s))],["Parts in stock",stockVal],["Kit, lifts & fit-outs",kit],["Rent deposits",s.deposits||0],["Mansion",mansionValue(s)]].filter(x=>x[1]>0||x[0]==="Cash in the bank");
   const unpaid=s.inbox.filter(p=>p.type==="bill").reduce((t,b)=>t+b.amount,0);
   const owe=[["Overdraft",Math.max(0,-s.cash)],["Mortgages",mort],["Suppliers (trade account)",Math.round(s.owedSuppliers)],["Bank loans left",s.loans.reduce((t,l)=>t+l.weekly*l.left,0)],["Kit on finance left",s.finance.reduce((t,f)=>t+f.weekly*f.left,0)],["VAT building up",s.vat.registered?Math.max(0,Math.round(s.vat.output-s.vat.input)):0],["Unpaid bills",Math.round(unpaid)]].filter(x=>x[1]>0);
   const o=own.reduce((t,x)=>t+x[1],0), w=owe.reduce((t,x)=>t+x[1],0);
@@ -2236,7 +2253,65 @@ function bookTick(s){ const B=s.book; if(!B||!B.games.length) return; let left=f
   if(!left&&s.t>=B.games[0].at+4*60) genCoupon(s); }
 function bookOwn(s,f,gf,ga){ const B=s.book; if(!B) return; const g=B.games.find(x=>x.own&&!x.res); if(!g) return; const home=g.home===s.club.name; settleGame(s,g,home?gf:ga,home?ga:gf); }
 
-if(typeof module!=="undefined") module.exports={pitchBiz,acceptPitch,declinePitch,buyBack,buyBackCost,WEALTH_TIERS,wealthTier,bookState,genCoupon,placeBet,bookTick,bookOwn,bookOdds,money0,MECH,mechAction,mechDaily,mechMult,bizNightly,menuState,MENUS,DJS,PROJECTS,MODELS,BUDGETS,fleetState,fleetDemand,unitCost,capCost,stockState,stockSlots,sellChance,buildState,brandState,bankState,bankMult,roomsMult,occ,ROOM_WORD,ROOM_BASE,FLEET_WORD,mx,STORIES,LATER,storyDaily,storyAnswer,birthday,later,mg,mgmtMult,mgmtCost,bizSet,buildFeat,featCost,hireBoss,bizDecide,bizMgmtDaily,DECISIONS,BIZ_FEATURES,BIZ_UNIT,PRICE_SET,STAFF_SET,MKT_SET,BOSSES,fameEff,fameTier,FAME_TIERS,FAME_PERKS,hasPerk,appearanceFee,FAME_MAX,creator,startChannel,filmVideo,merchUp,merchWeekly,speakGig,speakFee,bookDeal,ytSubs,buildBoxes,boxIncome,boxCost,namingOffer,signNaming,concert,documentary,BIZ_TYPES,BIZ,buildBiz,genDeals,buyDeal,upgradeBiz,sellBiz,bizAct,bizValue,bizExpected,bizUpCost,empireValue,RIVALS,rivalsState,buyStake,sellStake,takeControl,stakeCost,stakesValue,floatGroup,groupCap,groupBase,tradeGroup,IPO_MIN,socialState,followers,answerDm,socialDaily,empireDaily,lvlMult,windowOpen,windowNext,worldClass,wcWilling,ELITE_CLUBS,shopClub,clubValue,residence,taxRate,TAX_BY_CITY,playCup,cupReady,cupTie,CUP_ROUNDS,COACHES,hireCoach,coachWage,upgradeFac,facCost,FACILITY_LV,shopIncome,findSponsor,signSponsor,TOURS,preseasonTour,kitLaunch,CITY_INFO,cityDo,cityMult,cityActs,candidates,staffWage,TRAITS,trait,staffSpeed,staffFix,makeCandidate,CLUBS,clubPrice,TIER_CAP,SIGN_LIMIT,answerAsk,mgrIdeas,mgrAsk,buyPlayer,sellOffer,playerValue,bestXI,acceptBid,rejectBid,clubFix,genMarket,TACTICS,clubEliteScore,mgrNote,buyTickets,lottoDraw,nextDrawDay,LOTTO_PRICE,LOTTO_MAX,LOTTO_N,LOTTO_PICK,LOTTO_PRIZES,sellGarage,businessValue,garageValue,addCrew,removeCrew,workerSpeed,buyCar,driveCar,trackDay,restoreCar,sellCar,buyYacht,yachtParty,yachtCruise,sellYacht,buyHorse,enterRace,studHorse,sellHorse,buyClub,signPlayer,sellPlayer,expandStadium,sellClub,luxValue,clubWages,travel,buyJet,holiday,flightMins,genListings,buyProperty,setPropMode,renovate,sellProperty,buyFreehold,buyInvest,sellInvest,investTotal,invValue,loanCheck,workProfitPerWeek,moneyIO,worth,yearEnd,newGame,migrate,advance,accept,decline,passOn,startJob,jumpIn,stepBack,completeJob,orderParts,partsNeeded,canStart,currentPopup,payBill,delayBill,dismissInfo,buyKit,buyLift,buyCert,runCampaign,hire,fire,openGarage,franchiseOut,takeLoan,health,stars,estimate,catchUp,JOB,LOCS,DAY,G,allJobs,stockCount,weekSummary,nightFF};
+// ===== MANSION BUILDER =====
+const MANSION_PLOTS=[{id:"london",name:"Hampstead estate",city:"london",price:8e6,mult:1,art:"man_london"},{id:"miami",name:"Star Island waterfront",city:"miami",price:14e6,mult:1.6,art:"man_la"},{id:"dubai",name:"Palm Jumeirah frond",city:"dubai",price:18e6,mult:2,art:"man_dubai"},{id:"monaco",name:"Clifftop villa, Monaco",city:"monaco",price:30e6,mult:3,art:"man_monaco"}];
+const ROOMS=[{id:"hall",name:"Grand hall",cost:1e6,art:"room_hall",perk:"The heart of the house. +fame, and unlocks every other room."},
+ {id:"cars",name:"Car gallery",cost:2e6,art:"room_cars",perk:"Shows off your cars. Up to 4/8/12 cars gain extra value every day."},
+ {id:"pool",name:"Pool & spa",cost:1.5e6,art:"room_pool",perk:"+5/10/15 energy every morning."},
+ {id:"cinema",name:"Home cinema",cost:8e5,art:"room_cinema",perk:"Premieres at home — parties give more fame."},
+ {id:"cellar",name:"Wine cellar",cost:6e5,art:"room_cellar",perk:"Rare vintages: sell a few bottles every week."},
+ {id:"gym",name:"Private gym",cost:5e5,art:"room_gym",perk:"Look the part: +1/2/3 fame a week."},
+ {id:"club",name:"Private nightclub",cost:2.5e6,art:"room_club",perk:"Parties here are legendary — 1.5×/2×/2.5× party fame."},
+ {id:"trophy",name:"Trophy room",cost:1e6,art:"room_trophy",perk:"Every milestone you've hit earns fame each week."},
+ {id:"heli",name:"Helipad",cost:3e6,art:"room_heli",perk:"Flights take 10/15/20% less time."},
+ {id:"staff",name:"Staff wing",cost:1.2e6,art:"room_staff",perk:"Butlers and housekeepers cut upkeep by 20/35/50%."}];
+const ROOM_X=[1,2.5,6];
+function mansion(s){ return s.mansion||(s.mansion={plot:null,rooms:{},spent:0,partyAt:0}); }
+function mRoom(s,id){ return (s.mansion&&s.mansion.rooms[id])||0; }
+function roomCost(s,id){ const M=mansion(s), P=MANSION_PLOTS.find(x=>x.id===M.plot), R=ROOMS.find(x=>x.id===id); const lv=M.rooms[id]||0; return lv>=3?0:Math.round(R.cost*(P?P.mult:1)*ROOM_X[lv]/1000)*1000; }
+function buyPlot(s,id){ const M=mansion(s); if(M.plot) return {ok:false,msg:"You already have a mansion."}; const P=MANSION_PLOTS.find(x=>x.id===id); if(!P) return {ok:false};
+  if(s.cash<P.price) return {ok:false,msg:"Not enough cash."}; s.cash-=P.price; spend(s,P.price,"invest"); M.plot=id; M.spent=P.price; gainFame(s,15); s.log.unshift({t:s.t,x:`Bought the ${P.name} plot. Time to build.`}); dirty(s); return {ok:true,P}; }
+function buildRoom(s,id){ const M=mansion(s); if(!M.plot) return {ok:false,msg:"Buy a plot first."}; const R=ROOMS.find(x=>x.id===id); if(!R) return {ok:false};
+  if(id!=="hall"&&!M.rooms.hall) return {ok:false,msg:"Build the grand hall first."}; const lv=M.rooms[id]||0; if(lv>=3) return {ok:false,msg:"Fully built."};
+  const c=roomCost(s,id); if(s.cash<c) return {ok:false,msg:"Not enough cash."}; s.cash-=c; spend(s,c,"invest"); M.rooms[id]=lv+1; M.spent+=c; gainFame(s,3+lv*3); s.log.unshift({t:s.t,x:`${lv?"Upgraded":"Built"} the ${R.name.toLowerCase()} (level ${lv+1}).`}); dirty(s); return {ok:true,R,lv:lv+1}; }
+function mansionValue(s){ const M=s.mansion; return M&&M.plot?Math.round(M.spent*.85):0; }
+function mansionUpkeep(s){ const M=s.mansion; if(!M||!M.plot) return 0; return Math.round((M.spent-MANSION_PLOTS.find(x=>x.id===M.plot).price*.7)*.0009*(1-[0,.2,.35,.5][mRoom(s,"staff")])/10)*10; }
+function throwParty(s){ const M=mansion(s); if(!M.rooms.hall) return {ok:false,msg:"Build the grand hall first."}; if(M.partyAt>s.t) return {ok:false,msg:`Next party ${when(s,M.partyAt)}.`};
+  const P=MANSION_PLOTS.find(x=>x.id===M.plot); const cost=Math.round(80000*P.mult); if(s.cash<cost) return {ok:false,msg:"Not enough cash."}; s.cash-=cost; spend(s,cost,"running");
+  const lv=Object.values(M.rooms).reduce((t,x)=>t+x,0); let fame=(6+lv*1.5)*[1,1.5,2,2.5][mRoom(s,"club")]+mRoom(s,"cinema")*3; gainFame(s,fame); M.partyAt=s.t+6*DAY;
+  let bonus=0; if(rng(s)<.25+lv*.015){ bonus=Math.round(Math.max(50000,(s._nw||0)*(.002+rng(s)*.006))/1000)*1000; s.cash+=bonus; s.today.rent=(s.today.rent||0)+bonus; }
+  socialPost(s,"party",{}); dirty(s); return {ok:true,fame:Math.round(fame),bonus,cost}; }
+function mansionDaily(s){ const M=s.mansion; if(!M||!M.plot) return; const up=mansionUpkeep(s); if(up){ s.cash-=up; spend(s,up,"running"); }
+  const pool=mRoom(s,"pool"); if(pool&&s.energy!=null) s.energy=Math.min(100,s.energy+pool*5);
+  const cg=mRoom(s,"cars"); if(cg) for(const c of s.cars.slice(0,cg*4)) c.value*=1+.0006*cg;
+  if(weekday(s.t)==="Mon"){ const cel=mRoom(s,"cellar"); if(cel){ const w=Math.round(12000*cel*MANSION_PLOTS.find(x=>x.id===M.plot).mult); s.cash+=w; s.today.rent=(s.today.rent||0)+w; }
+    const gy=mRoom(s,"gym"); if(gy) gainFame(s,gy); const tr=mRoom(s,"trophy"); if(tr) gainFame(s,Math.min(20,Object.keys(s.milestones||{}).length*.3*tr)); } }
+// ===== RIVAL TYCOON =====
+const RIVAL_PPL=[{name:"Victor Kane",co:"Kane Holdings",art:"rival_kane"},{name:"Elena Voss",co:"Voss Capital",art:"rival_voss"},{name:"Marco Bellini",co:"Bellini Group",art:"rival_kane"},{name:"Sasha Orlov",co:"Orlov Industries",art:"rival_voss"}];
+function rivalMe(s){ const nw=s._nw||0; if(!s.rv){ if(nw<250000) return null; s.rv={i:0,worth:Math.max(5e5,nw*1.4),log:[],shield:0,leakAt:0,beaten:0,since:s.t}; } return s.rv; }
+function rvP(s){ return RIVAL_PPL[s.rv.i%RIVAL_PPL.length]; }
+function rvLog(s,x,bad){ const R=s.rv; R.log.unshift({t:s.t,x,bad}); if(R.log.length>10) R.log.length=10; }
+function rivalWeek(s){ const R=rivalMe(s); if(!R) return; if(R.respawn){ if(s.t<R.respawn) return; R.respawn=0; R.worth=Math.max(1e6,(s._nw||0)*1.3); R.since=s.t; addInfo(s,`New rival: ${rvP(s).name}`,`${rvP(s).name} of ${rvP(s).co} says they'll do what ${RIVAL_PPL[(R.i-1)%RIVAL_PPL.length].name} couldn't — finish you.`,"bad"); return; }
+  const nw=s._nw||0; R.worth=Math.max(5e5,R.worth*(1.03+gauss(s)*.03)+(nw*1.2-R.worth)*.12);
+  const P=rvP(s); if(R.shield>s.t){ rvLog(s,`Your investigators caught ${P.name} planning a move — blocked.`); return; }
+  if(rng(s)<.3) return; const moves=["smear"]; if((s.deals||[]).length) moves.push("snipe","snipe"); const cities=[...new Set([...(s.empire||[]).map(b=>b.city),...s.garages.map(g=>locCity(g.loc))])]; if(cities.length) moves.push("war"); if(s.club&&s.club.fixture) moves.push("derby");
+  const m=pick(s,moves); let x="";
+  if(m==="snipe"){ const d=pick(s,s.deals); s.deals=s.deals.filter(z=>z!==d); x=`${P.name} bought ${d.b.name} right before you could.`; }
+  else if(m==="war"){ const c=pick(s,cities); addCityBoost(s,c,.82,4); for(const b of s.empire.filter(b=>b.city===c)) (b.boost=b.boost||[]).push({m:.85,until:s.t+4*DAY}); x=`${P.co} started a price war in ${CITIES[c].name}. Your businesses there take a hit for 4 days.`; }
+  else if(m==="derby"){ s.club.fixture.oppStr+=6; s.club.fixture.opp=`${P.name.split(" ")[1]} United`; x=`${P.name} bought ${s.club.fixture.opp} and splashed out on players — your next match is a grudge match.`; }
+  else { const f=Math.round(4+(s.fame||0)*.03); s.fame=Math.max(0,(s.fame||0)-f); x=`${P.name} went on TV and trashed your name. −${f} fame.`; socialPost(s,"rival",{who:P.name}); }
+  rvLog(s,x,true); toast(s,`⚔ ${x}`,"buzz"); dirty(s); }
+function rivalAct(s,a){ const R=rivalMe(s); if(!R||R.respawn) return {ok:false}; const P=rvP(s);
+  if(a==="spy"){ const c=Math.max(20000,Math.round(R.worth*.004/1000)*1000); if(s.cash<c) return {ok:false,msg:"Not enough cash."}; s.cash-=c; spend(s,c,"running"); R.shield=s.t+14*DAY; rvLog(s,`You hired investigators to watch ${P.name} for two weeks.`); dirty(s); return {ok:true,msg:`Investigators on ${P.name} for 14 days.`}; }
+  if(a==="leak"){ if(R.leakAt>s.t) return {ok:false,msg:`Too soon — try ${when(s,R.leakAt)}.`}; const c=Math.max(15000,Math.round(R.worth*.002/1000)*1000); if(s.cash<c) return {ok:false,msg:"Not enough cash."}; s.cash-=c; spend(s,c,"running"); R.leakAt=s.t+7*DAY;
+    if(rng(s)<.7){ R.worth*=.9; gainFame(s,6); rvLog(s,`Your leak hit the papers. ${P.co} shares fell 10%.`); dirty(s); return {ok:true,msg:`Story ran — ${P.co} down 10%, +6 fame.`}; }
+    const f=10; s.fame=Math.max(0,(s.fame||0)-f); rvLog(s,`The leak got traced back to you. −${f} fame.`,true); dirty(s); return {ok:true,msg:"It backfired — the leak was traced to you. −10 fame."}; }
+  if(a==="takeover"){ const nw=s._nw||0; if(nw<R.worth*1.5) return {ok:false,msg:`You need to be worth ${money0(R.worth*1.5)} to take ${P.co} over.`}; const c=Math.round(R.worth*.5/1e5)*1e5; if(s.cash<c) return {ok:false,msg:`You need ${money0(c)} in cash.`};
+    s.cash-=c; const gain=Math.round(R.worth*.75/1e5)*1e5; s.cash+=gain; s.today.rent=(s.today.rent||0)+gain-c; gainFame(s,80); R.beaten++; rvLog(s,`You took over ${P.co} and broke it up for ${money0(gain)}. ${P.name} is finished.`);
+    socialPost(s,"rivalwin",{who:P.name,co:P.co}); R.i++; R.respawn=s.t+10*DAY; R.log=[]; dirty(s); return {ok:true,msg:`${P.co} is yours. Broken up for ${money0(gain)}. +80 fame.`,win:true}; }
+  return {ok:false}; }
+
+if(typeof module!=="undefined") module.exports={MANSION_PLOTS,ROOMS,mansion,mRoom,roomCost,buyPlot,buildRoom,mansionValue,mansionUpkeep,throwParty,mansionDaily,RIVAL_PPL,rivalMe,rvP,rivalWeek,rivalAct,pitchBiz,acceptPitch,declinePitch,buyBack,buyBackCost,WEALTH_TIERS,wealthTier,bookState,genCoupon,placeBet,bookTick,bookOwn,bookOdds,money0,MECH,mechAction,mechDaily,mechMult,bizNightly,menuState,MENUS,DJS,PROJECTS,MODELS,BUDGETS,fleetState,fleetDemand,unitCost,capCost,stockState,stockSlots,sellChance,buildState,brandState,bankState,bankMult,roomsMult,occ,ROOM_WORD,ROOM_BASE,FLEET_WORD,mx,STORIES,LATER,storyDaily,storyAnswer,birthday,later,mg,mgmtMult,mgmtCost,bizSet,buildFeat,featCost,hireBoss,bizDecide,bizMgmtDaily,DECISIONS,BIZ_FEATURES,BIZ_UNIT,PRICE_SET,STAFF_SET,MKT_SET,BOSSES,fameEff,fameTier,FAME_TIERS,FAME_PERKS,hasPerk,appearanceFee,FAME_MAX,creator,startChannel,filmVideo,merchUp,merchWeekly,speakGig,speakFee,bookDeal,ytSubs,buildBoxes,boxIncome,boxCost,namingOffer,signNaming,concert,documentary,BIZ_TYPES,BIZ,buildBiz,genDeals,buyDeal,upgradeBiz,sellBiz,bizAct,bizValue,bizExpected,bizUpCost,empireValue,RIVALS,rivalsState,buyStake,sellStake,takeControl,stakeCost,stakesValue,floatGroup,groupCap,groupBase,tradeGroup,IPO_MIN,socialState,followers,answerDm,socialDaily,empireDaily,lvlMult,windowOpen,windowNext,worldClass,wcWilling,ELITE_CLUBS,shopClub,clubValue,residence,taxRate,TAX_BY_CITY,playCup,cupReady,cupTie,CUP_ROUNDS,COACHES,hireCoach,coachWage,upgradeFac,facCost,FACILITY_LV,shopIncome,findSponsor,signSponsor,TOURS,preseasonTour,kitLaunch,CITY_INFO,cityDo,cityMult,cityActs,candidates,staffWage,TRAITS,trait,staffSpeed,staffFix,makeCandidate,CLUBS,clubPrice,TIER_CAP,SIGN_LIMIT,answerAsk,mgrIdeas,mgrAsk,buyPlayer,sellOffer,playerValue,bestXI,acceptBid,rejectBid,clubFix,genMarket,TACTICS,clubEliteScore,mgrNote,buyTickets,lottoDraw,nextDrawDay,LOTTO_PRICE,LOTTO_MAX,LOTTO_N,LOTTO_PICK,LOTTO_PRIZES,sellGarage,businessValue,garageValue,addCrew,removeCrew,workerSpeed,buyCar,driveCar,trackDay,restoreCar,sellCar,buyYacht,yachtParty,yachtCruise,sellYacht,buyHorse,enterRace,studHorse,sellHorse,buyClub,signPlayer,sellPlayer,expandStadium,sellClub,luxValue,clubWages,travel,buyJet,holiday,flightMins,genListings,buyProperty,setPropMode,renovate,sellProperty,buyFreehold,buyInvest,sellInvest,investTotal,invValue,loanCheck,workProfitPerWeek,moneyIO,worth,yearEnd,newGame,migrate,advance,accept,decline,passOn,startJob,jumpIn,stepBack,completeJob,orderParts,partsNeeded,canStart,currentPopup,payBill,delayBill,dismissInfo,buyKit,buyLift,buyCert,runCampaign,hire,fire,openGarage,franchiseOut,takeLoan,health,stars,estimate,catchUp,JOB,LOCS,DAY,G,allJobs,stockCount,weekSummary,nightFF};
 
 </script>
 <script>
@@ -2408,9 +2483,9 @@ function lifeTab(){
     <div class="list" style="gap:6px">${FAME_PERKS.map(P=>`<div class="line" style="align-items:center;gap:10px;${f>=P.at?"":"opacity:.55"}"><span>${f>=P.at?"✅":"🔒"} <b>${P.name}</b> <span class="muted" style="font-size:12px">· ${P.desc}${P.at===150&&f>=150?` (${money(appearanceFee(S))}/wk)`:""}</span></span><span class="chip ${f>=P.at?"g":""}">${P.at}</span></div>`).join("")}</div>
     <div class="kv"><span>Lifestyle worth</span><span class="num goldc">${money(luxValue(S))}</span><span>Personal account</span><span class="num">${money(S.personal)}</span></div></div>
     ${homeCard()}
-    <div class="lifegrid">${[["cars","Cars","car_super",S.cars.length?`${S.cars.length} owned`:"Showroom"],["yacht","Yachts","yacht_super",S.yachts.length?`${S.yachts.length} owned`:"Marina"],["horses","Racehorses","horse",S.horses.length?`${S.horses.length} in training`:"Stables"],["club","Football club","stadium",S.club?esc(S.club.name):"Buy a club"],["casino","Casino","cas_floor","Blackjack · roulette · poker · slots · football"]].map(([k,l,a,sub])=>`<button class="lifetile${k==="casino"?" wide":""}" type="button" data-lseg="${k}" aria-pressed="${lSeg===k}">${img(a,l)}<span class="lt"><b>${l}</b><span>${sub}</span></span></button>`).join("")}</div>`;
-  const titles={cars:"Cars",yacht:"Yachts",horses:"Racehorses",club:S.club?esc(S.club.name):"Football club",casino:"Casino"};
-  return top+`<div class="sechead" style="margin-top:16px"><h2>${titles[lSeg]}</h2></div>`+({cars:carsLife,yacht:yachtLife,horses:horsesLife,club:clubLife,casino:casinoLife})[lSeg]();
+    <div class="lifegrid">${[["cars","Cars","car_super",S.cars.length?`${S.cars.length} owned`:"Showroom"],["yacht","Yachts","yacht_super",S.yachts.length?`${S.yachts.length} owned`:"Marina"],["horses","Racehorses","horse",S.horses.length?`${S.horses.length} in training`:"Stables"],["club","Football club","stadium",S.club?esc(S.club.name):"Buy a club"],["mansion","Mansion","man_monaco",S.mansion&&S.mansion.plot?`${Object.keys(S.mansion.rooms).length}/10 rooms`:"Build your dream home"],["casino","Casino","cas_floor","Blackjack · roulette · poker · slots · football"]].map(([k,l,a,sub])=>`<button class="lifetile" type="button" data-lseg="${k}" aria-pressed="${lSeg===k}">${img(a,l)}<span class="lt"><b>${l}</b><span>${sub}</span></span></button>`).join("")}</div>`;
+  const titles={cars:"Cars",yacht:"Yachts",horses:"Racehorses",club:S.club?esc(S.club.name):"Football club",casino:"Casino",mansion:"Your mansion"};
+  return top+`<div class="sechead" style="margin-top:16px"><h2>${titles[lSeg]}</h2></div>`+({cars:carsLife,yacht:yachtLife,horses:horsesLife,club:clubLife,casino:casinoLife,mansion:mansionLife})[lSeg]();
 }
 function homeCard(){
   const h=S.props.find(p=>p.mode==="home");
@@ -2516,7 +2591,7 @@ function cityScene(here,home){ const C=CITIES[here], I=CITY_INFO[here]; const mu
 }
 function worldTab(){
   const here=S.at; const tr=S.travel;
-  const cur=here==="air"?`<div class="card"><div class="sechead"><h3>✈ Flying to ${CITIES[tr.to].name}</h3><span class="eyebrow">Lands ${when(S,tr.arriveAt)}</span></div><div class="bar"><i style="width:${Math.min(100,(S.t-tr.depart)/(tr.arriveAt-tr.depart)*100)}%"></i></div></div>`:`<div class="muted" style="font-size:13px;margin:4px 0 10px">You're in <b>${CITIES[here].name}</b>. Fly somewhere to open garages, buy property and do what that city's known for.</div>`;
+  const cur=here==="air"?flightScene(tr)+`<div class="card" style="display:none"><div class="sechead"><h3>✈ Flying to ${CITIES[tr.to].name}</h3><span class="eyebrow">Lands ${when(S,tr.arriveAt)}</span></div><div class="bar"><i style="width:${Math.min(100,(S.t-tr.depart)/(tr.arriveAt-tr.depart)*100)}%"></i></div></div>`:`<div class="muted" style="font-size:13px;margin:4px 0 10px">You're in <b>${CITIES[here].name}</b>. Fly somewhere to open garages, buy property and do what that city's known for.</div>`;
   const cities=Object.entries(CITIES).filter(([k])=>k!==here&&!(tr&&k===tr.to));
   return cur+`<div class="sechead"><h2>Fly somewhere</h2><span class="eyebrow">${(S.jets||[]).length?"Private jet ready":"Commercial flights"}</span></div>
   <div class="list" style="grid-template-columns:1fr">${cities.map(([k,C])=>{ const mins=here==="air"?0:flightMins(here,k); const owned=S.garages.filter(g=>locCity(g.loc)===k).length, props=S.props.filter(p=>(PROPERTY_TYPES.find(x=>x.id===p.type)||{}).city===k||(k==="london"&&p.type!=="freehold"&&!(PROPERTY_TYPES.find(x=>x.id===p.type)||{}).city)).length; const jet=here==="air"?null:jetFor(S,k); const tk=here==="air"?0:ticketCost(here,k);
@@ -2551,7 +2626,7 @@ function mechPanel(b){ const T=MECH[b.type], X=mx(b), P=BIZ[b.type].price, E=biz
      <div class="list" style="gap:6px">${DJS.map(D=>`<div class="line" style="align-items:center;gap:8px"><span><b>${D.name}</b><br><span class="muted" style="font-size:12px">Fee ~${shortMoney(E*D.cost)} a night · crowd ×${D.draw}${D.risk?` · ${Math.round(D.risk*100)}% no-show risk`:""}</span></span>${cur===D.id?`<span class="chip g">Booked</span>`:mbtn(b,"dj",D.id,"","Book","ghost")}</div>`).join("")}</div>
      <div style="display:flex;justify-content:space-between;align-items:center"><span><b>Ticket price</b> <span class="muted" style="font-size:12px">· ${Math.round(tk*100)}% of normal</span></span>${pm(b,"ticket",0)}</div></div>`; }
   if(T==="fleet"){ const F=fleetState(b), W=FLEET_WORD[b.type], dem=fleetDemand(b);
-    return `<div class="card"><h3>Your ${W[0]}</h3><div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><div class="tile"><span class="eyebrow">Owned</span><span class="v">${F.units}</span></div><div class="tile"><span class="eyebrow">Demand</span><span class="v">${dem}</span></div><div class="tile"><span class="eyebrow">Broken</span><span class="v ${F.broken?"bad":""}">${F.broken}</span></div></div>
+    return `${b.type==="airline"?routeMap(F.places||[]):""}<div class="card"><h3>Your ${W[0]}</h3><div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><div class="tile"><span class="eyebrow">Owned</span><span class="v">${F.units}</span></div><div class="tile"><span class="eyebrow">Demand</span><span class="v">${dem}</span></div><div class="tile"><span class="eyebrow">Broken</span><span class="v ${F.broken?"bad":""}">${F.broken}</span></div></div>
       <div class="muted" style="font-size:12px">Each one earns only if there's demand for it. ${F.units<dem?`You could use ${dem-F.units} more.`:F.units>dem?`You have ${F.units-dem} sitting idle — open a new ${W[1]} or sell some.`:"Perfectly matched."} Every ${W[0].slice(0,-1)} costs a little upkeep.</div>
       <div class="chips">${mbtn(b,"buyUnit","","",`Buy one · ${shortMoney(unitCost(b))}`,"",S.cash<unitCost(b))}${mbtn(b,"sellUnit","","","Sell one","ghost")}${F.broken?mbtn(b,"repair","","",`Repair all · ${shortMoney(unitCost(b)*.15*F.broken)}`,"green"):""}</div></div>
      <div class="card"><h3>${W[2]}</h3><div class="muted" style="font-size:12px">Each new ${W[1]} adds demand for 4 more ${W[0]}.${F.places.length?` You have: ${F.places.map(esc).join(", ")}.`:""}</div><div>${mbtn(b,"cap","","",`${W[2]} · ${shortMoney(capCost(b))}`,"",S.cash<capCost(b))}</div>${mg(b).boss>=1?`<div class="muted" style="font-size:12px">Your manager fixes breakdowns automatically.</div>`:""}</div>`; }
@@ -2847,8 +2922,8 @@ let gOpen=false;
 function garageTab(){
   if(bSeg==="garages") bSeg="empire"; if(["jobs","parts","team"].includes(tab)){ gOpen=true; bSeg="empire"; }
   if(bSeg==="empire"&&gOpen&&bizOpen==null) return garagePage();
-  const bs=`<div class="sec"><div class="seg" style="grid-template-columns:repeat(3,1fr)" role="tablist">${[["empire","Empire"],["deals","Deals"],["stocks","Stocks"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}">${l}</button>`).join("")}</div></div>`;
-  return bs+`<div class="sec">${bSeg==="empire"?empireTab():bSeg==="deals"?openNewHtml()+dealsTab():stocksTab()}</div>`; }
+  const bs=`<div class="sec"><div class="seg" style="grid-template-columns:repeat(4,1fr)" role="tablist">${[["empire","Empire"],["deals","Deals"],["stocks","Stocks"],["rival","⚔ Rival"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}">${l}</button>`).join("")}</div></div>`;
+  return bs+`<div class="sec">${bSeg==="empire"?empireTab():bSeg==="deals"?openNewHtml()+dealsTab():bSeg==="rival"?rivalTab():stocksTab()}</div>`; }
 function garagePage(){ const g=curG();
   return `<div class="sec"><button class="linkbtn" type="button" id="gback" style="margin-bottom:6px">‹ Empire</button><div class="sechead"><h2>${esc(g.name)}</h2><span class="eyebrow">${esc(LOCS[g.loc].name)}${g.franchise?" · franchise":managed(g)?" · managed":""}</span></div></div>`+garageSubBar()+(tab==="jobs"?jobsTab():tab==="parts"?partsTab():tab==="team"?teamTab():garageInner()); }
 function garageCards(){ return `<div class="sechead" style="margin-top:12px"><h2>Garages</h2><button class="linkbtn" type="button" data-bseg="deals">+ Open another</button></div><div class="list">${S.garages.map((x,i)=>{ const ready=x.jobs.filter(j=>j.status==="done").length, nw=managed(x)?0:x.board.length;
@@ -3173,6 +3248,10 @@ document.addEventListener("click",ev=>{
   if(d.pdec){ const [k,id]=d.pdec.split("|"); declinePitch(S,k,+id); done("Offers turned down."); return; }
   if(d.bback){ const r=buyBack(S,+d.bback); done(r.ok?`You own 100% again (${money(r.cost)}).`:r.msg,r.ok?"cash":"buzz"); return; }
   if(d.car3d){ view3d(d.car3d); return; }
+  if(d.mplot){ const r=buyPlot(S,d.mplot); done(r.ok?`The ${r.P.name} plot is yours. Build the grand hall first.`:r.msg,r.ok?"rush":"buzz"); return; }
+  if(d.mroom){ const r=buildRoom(S,d.mroom); done(r.ok?`${r.R.name} ${r.lv>1?`upgraded to level ${r.lv}`:"built"}!`:r.msg,r.ok?"cash":"buzz"); return; }
+  if(t.id==="mparty"){ const r=throwParty(S); done(r.ok?`Party of the year! +${r.fame} fame${r.bonus?`, and a guest paid you a ${money(r.bonus)} finder's fee`:""}.`:r.msg,r.ok?"rush":"buzz"); return; }
+  if(d.rv){ if(d.rv==="takeover"&&!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again to launch the takeover"; setTimeout(()=>{ if(t.isConnected) delete t.dataset.armed; },3000); return; } const r=rivalAct(S,d.rv); done(r.msg||"",r.ok?(r.win?"rush":"cash"):"buzz"); return; }
   if(d.char){ if(d.char==="x") S.char=null; else { S.char=+d.char; sfx("cash"); } save(); render(); return; }
   if(casinoClick(t,d)) return;
   if(d.lseg){ lSeg=d.lseg; render(); return; }
@@ -3560,7 +3639,7 @@ function cutPump(){ if(cutOn||!cutQ.length||!S||document.hidden) return; cutOn=c
   document.body.appendChild(el); const v=el.querySelector("video"); const was=S.paused; S.paused=true; let shut=false;
   const close=()=>{ if(shut) return; shut=true; el.classList.add("out"); setTimeout(()=>el.remove(),300); S.paused=was; cutOn=null; setTimeout(cutPump,500); };
   v.onended=close; el.onclick=close; setTimeout(close,9000); try{ const pr=v.play(); if(pr&&pr.catch) pr.catch(()=>{ v.muted=true; try{ const p2=v.play(); if(p2&&p2.catch) p2.catch(()=>{}); }catch(e){} }); }catch(e){} if(cutOn.line) say(cutOn.line); }
-function cutConds(){ const nw=S._nw||0; return {supercar:S.cars.length>0,jet:(S.jets||[]).length>0,yacht:S.yachts.length>0,club:!!S.club,cup:!!(S.club&&S.club.cups>0),lotto:!!(S.lotto&&S.lotto.won>=1e6),million:nw>=1e6,ipo:!!S.ipo,mansion:S.props.some(p=>((PROPERTY_TYPES.find(x=>x.id===p.type)||{}).price||0)>=5e6)}; }
+function cutConds(){ const nw=S._nw||0; return {supercar:S.cars.length>0,jet:(S.jets||[]).length>0,yacht:S.yachts.length>0,club:!!S.club,cup:!!(S.club&&S.club.cups>0),lotto:!!(S.lotto&&S.lotto.won>=1e6),million:nw>=1e6,ipo:!!S.ipo,mansion:!!(S.mansion&&S.mansion.rooms&&S.mansion.rooms.hall)||S.props.some(p=>((PROPERTY_TYPES.find(x=>x.id===p.type)||{}).price||0)>=5e6)}; }
 let cutAt=0;
 function cutCheck(){ if(!S) return; const now=Date.now(); if(now<cutAt) return; cutAt=now+1500;
   const C=cutConds(); if(!S.cuts){ S.cuts={garage:1}; for(const k in C) if(C[k]) S.cuts[k]=1; S.tierSeen=wealthTier(S); }
@@ -3586,6 +3665,42 @@ let mvLoaded=false;
 function view3d(id){ const T=CARS_LUX.find(x=>x.id===id); if(!mvLoaded){ mvLoaded=true; const sc=document.createElement("script"); sc.type="module"; sc.src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"; document.head.appendChild(sc); }
   const el=document.createElement("div"); el.className="cutscene v3d"; el.innerHTML=`<model-viewer src="${location.hostname.endsWith("github.io")?"":"https://bluey3106-collab.github.io/Tycoon/"}art/car3d_${id}.glb" camera-controls auto-rotate auto-rotate-delay="0" rotation-per-second="25deg" shadow-intensity="1" exposure="1.1" environment-image="neutral" touch-action="pan-y" style="width:100%;height:100%;background:radial-gradient(circle at 50% 60%,#2a2a2a,#0b0b0b)"></model-viewer><div class="cuttxt" style="bottom:80px"><span class="eyebrow">Showroom · drag to spin</span><b>${esc(T?T.name:"")}</b></div><button class="btn small ghost v3dx" type="button">Close</button>`;
   document.body.appendChild(el); el.querySelector(".v3dx").onclick=()=>el.remove(); }
+// ===== Mansion, rival, flight scene, route map =====
+function mansionLife(){ const M=mansion(S);
+  if(!M.plot) return `<div class="muted" style="font-size:13px;margin-bottom:10px">Buy a plot, then design your dream home room by room. Every room adds a perk, and the whole place counts towards your net worth.</div><div class="list">${MANSION_PLOTS.map(P=>`<div class="job"><div class="ig" style="border-radius:0">${img(P.art,P.name)}</div><div style="padding:12px;display:flex;flex-direction:column;gap:6px"><div class="sechead"><h3>${P.name}</h3><span class="num goldc">${money(P.price)}</span></div><div class="muted" style="font-size:12.5px">${CITIES[P.city].name} · rooms cost ${P.mult}× London prices${P.mult>1?" — but it's worth more and parties pull bigger names":""}</div><div><button class="btn small" type="button" data-mplot="${P.id}" ${S.cash<P.price?"disabled":""}>Buy the plot</button></div></div></div>`).join("")}</div>`;
+  const P=MANSION_PLOTS.find(x=>x.id===M.plot); const built=Object.keys(M.rooms).length; const cg=mRoom(S,"cars");
+  return `<div class="card cashero">${img(P.art,P.name)}<div class="ov"><span class="eyebrow">${esc(CITIES[P.city].name)} · ${built}/10 rooms</span><h3>${esc(P.name)}</h3><span class="muted">Worth ${money(mansionValue(S))} · upkeep ${money(mansionUpkeep(S))}/day</span></div></div>
+  <div class="card" style="margin-top:10px"><div class="sechead"><h3>🥂 Throw a party</h3><span class="num goldc">${money(Math.round(80000*P.mult))}</span></div><div class="muted" style="font-size:12.5px">Fame grows with every room you've built — and your nightclub and cinema make it bigger. Rich guests sometimes pay you a finder's fee.</div><div><button class="btn small" type="button" id="mparty" ${!M.rooms.hall||M.partyAt>S.t?"disabled":""}>${M.partyAt>S.t?`Next party ${when(S,M.partyAt)}`:!M.rooms.hall?"Build the grand hall first":"Throw it"}</button></div></div>
+  <div class="roomgrid">${ROOMS.map(R=>{ const lv=M.rooms[R.id]||0, c=roomCost(S,R.id), locked=R.id!=="hall"&&!M.rooms.hall;
+    return `<div class="room${lv?"":" unbuilt"}">${img(R.art,R.name)}<div class="rin"><div class="sechead"><b>${R.name}</b><span class="lvdots">${[1,2,3].map(i=>`<i class="${i<=lv?"on":""}"></i>`).join("")}</span></div><span class="muted" style="font-size:11.5px">${R.perk}</span>
+      ${R.id==="cars"&&cg?`<div class="gallery">${S.cars.slice(0,cg*4).map(c=>img(carDef(c).art,"")).join("")||'<span class="muted" style="font-size:11px">No cars yet</span>'}</div>`:""}
+      ${lv<3?`<button class="btn small ${lv?"ghost":""}" type="button" data-mroom="${R.id}" ${locked||S.cash<c?"disabled":""}>${locked?"Needs the hall":`${lv?"Upgrade":"Build"} · ${shortMoney(c)}`}</button>`:`<span class="chip g">Fully built</span>`}</div></div>`; }).join("")}</div>`; }
+function rivalTab(){ const R=rivalMe(S);
+  if(!R) return `<div class="card"><h3>⚔ No rival yet</h3><div class="muted" style="font-size:13px">Nobody important has noticed you. Reach £250k net worth and a billionaire rival will come for your deals, your cities and your reputation.</div></div>`;
+  if(R.respawn) return `<div class="card"><h3>🏆 You've crushed ${R.beaten} rival${R.beaten>1?"s":""}</h3><div class="muted" style="font-size:13px">Word is someone new is coming for your crown. Enjoy the quiet while it lasts.</div></div>`;
+  const P=rvP(S), nw=S._nw||0, me=nw/(nw+R.worth); const spy=Math.max(20000,Math.round(R.worth*.004/1000)*1000), leak=Math.max(15000,Math.round(R.worth*.002/1000)*1000), tk=Math.round(R.worth*.5/1e5)*1e5;
+  return `<div class="card rivalcard"><div class="rvpic">${img(P.art,P.name)}</div><div class="meinfo"><span class="eyebrow" style="color:var(--bad)">Your rival</span><b>${esc(P.name)}</b><span class="muted" style="font-size:12.5px">${esc(P.co)} · worth ${moneyTop(R.worth)}</span>
+    <div class="vsbar"><i style="width:${Math.round(me*100)}%"></i></div><div style="display:flex;justify-content:space-between;font-size:11.5px"><span class="good">You ${moneyTop(nw)}</span><span class="bad">${esc(P.name.split(" ")[0])} ${moneyTop(R.worth)}</span></div>${R.shield>S.t?`<span class="chip g" style="align-self:flex-start">🕵 Watched until ${when(S,R.shield)}</span>`:""}</div></div>
+  <div class="card"><h3>Strike back</h3><div class="list">
+    <div class="line" style="align-items:center;gap:8px"><span><b>🕵 Hire investigators</b><br><span class="muted" style="font-size:12px">Watch ${esc(P.name.split(" ")[0])} for 14 days and block every move.</span></span><button class="btn small ghost" type="button" data-rv="spy" ${S.cash<spy?"disabled":""}>${shortMoney(spy)}</button></div>
+    <div class="line" style="align-items:center;gap:8px"><span><b>📰 Leak a story</b><br><span class="muted" style="font-size:12px">70% chance ${esc(P.co)} drops 10% and you gain fame. 30% it backfires.</span></span><button class="btn small ghost" type="button" data-rv="leak" ${R.leakAt>S.t||S.cash<leak?"disabled":""}>${R.leakAt>S.t?`Again ${when(S,R.leakAt)}`:shortMoney(leak)}</button></div>
+    <div class="line" style="align-items:center;gap:8px"><span><b>🦈 Hostile takeover</b><br><span class="muted" style="font-size:12px">${nw>=R.worth*1.5?`Buy ${esc(P.co)} and break it up — you pay ${shortMoney(tk)} and get back ${shortMoney(R.worth*.75)}.`:`Get to ${moneyTop(R.worth*1.5)} (1.5× their worth) to take them over.`}</span></span><button class="btn small" type="button" data-rv="takeover" ${nw<R.worth*1.5||S.cash<tk?"disabled":""}>${shortMoney(tk)}</button></div></div></div>
+  <div class="card"><h3>What ${esc(P.name.split(" ")[0])}'s been up to</h3>${R.log.length?R.log.map(l=>`<div style="font-size:12.5px" class="${l.bad?"":"good"}"><span class="muted">${agoStr(l.t)} ago</span> · ${esc(l.x)}</div>`).join(""):`<div class="muted" style="font-size:12.5px">Quiet so far. They move on Mondays — snatching deals, starting price wars, trashing your name, or buying your next opponent.</div>`}</div>`; }
+const CITY_LL={london:[51.5,-.1],manchester:[53.5,-2.2],monaco:[43.7,7.4],marbella:[36.5,-4.9],dubai:[25.2,55.3],newyork:[40.7,-74],miami:[25.8,-80.2],tokyo:[35.7,139.7],paris:[48.9,2.35],hongkong:[22.3,114.2],la:[34,-118.2],singapore:[1.35,103.8],madrid:[40.4,-3.7]};
+const cxy=k=>{ const L=CITY_LL[k]; return L?[(L[1]+130)*1.25,(62-L[0])*2.6]:null; };
+function arcPath(a,b){ const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2-Math.max(14,Math.abs(a[0]-b[0])*.22); return [mx,my]; }
+function mapBase(){ return `<rect x="0" y="0" width="340" height="170" rx="12" fill="url(#mg)"/><defs><radialGradient id="mg" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#16324a"/><stop offset="1" stop-color="#0a1420"/></radialGradient></defs>${[...Array(9)].map((_,i)=>`<line x1="${i*40+10}" y1="0" x2="${i*40+10}" y2="170" stroke="#ffffff10"/>`).join("")}${[...Array(5)].map((_,i)=>`<line x1="0" y1="${i*36+12}" x2="340" y2="${i*36+12}" stroke="#ffffff10"/>`).join("")}`; }
+function flightScene(tr){ const a=cxy(tr.from||"london")||[100,40], b=cxy(tr.to)||[200,60], c=arcPath(a,b); const p=Math.min(1,Math.max(0,(S.t-tr.depart)/Math.max(1,tr.arriveAt-tr.depart)));
+  const q=1-p, x=q*q*a[0]+2*q*p*c[0]+p*p*b[0], y=q*q*a[1]+2*q*p*c[1]+p*p*b[1]; const dx=2*q*(c[0]-a[0])+2*p*(b[0]-c[0]), dy=2*q*(c[1]-a[1])+2*p*(b[1]-c[1]); const ang=Math.atan2(dy,dx)*180/Math.PI;
+  const lux=tr.mode!=="economy";
+  return `<div class="card flight"><div class="cashero" style="min-height:0">${img(lux?"cabin_jet":"cabin_econ","Cabin")}<div class="ov"><span class="eyebrow">${tr.mode==="jet"?"Private jet":tr.mode==="business"?"Business class":"Economy"} · lands ${when(S,tr.arriveAt)}</span><h3>${esc(CITIES[tr.from]?CITIES[tr.from].name:"")} → ${esc(CITIES[tr.to].name)}</h3></div></div>
+    <svg viewBox="0 0 340 170" class="flightmap" aria-label="Flight path">${mapBase()}<path d="M${a[0]},${a[1]} Q${c[0]},${c[1]} ${b[0]},${b[1]}" fill="none" stroke="#d4a64a" stroke-width="1.6" stroke-dasharray="4 4" opacity=".8"/>
+    <circle cx="${a[0]}" cy="${a[1]}" r="3.5" fill="#fff"/><circle cx="${b[0]}" cy="${b[1]}" r="4" fill="#d4a64a"/><text x="${a[0]+5}" y="${a[1]-6}" class="mlbl">${esc(CITIES[tr.from]?CITIES[tr.from].name:"")}</text><text x="${b[0]+5}" y="${b[1]-6}" class="mlbl">${esc(CITIES[tr.to].name)}</text>
+    <g transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)})"><path d="M8 0 L-6 -5 L-3 0 L-6 5 Z" fill="#fff"/></g></svg>
+    <div class="bar"><i style="width:${Math.round(p*100)}%"></i></div><div class="muted" style="font-size:12px">${lux?"Lie-flat seat, champagne, quiet. You'll land refreshed.":"Knees against the seat in front. You'll land tired."} Your businesses keep running while you fly.</div></div>`; }
+function routeMap(places){ const R=places.map(n=>String(n).split(" ⇄ ").map(c=>Object.keys(CITY_LL).find(k=>(CITIES[k]?CITIES[k].name:k==="madrid"?"Madrid":k==="la"?"LA":k==="hongkong"?"Hong Kong":k==="paris"?"Paris":k==="singapore"?"Singapore":"")===c.trim()))).filter(r=>r[0]&&r[1]);
+  const ks=[...new Set(R.flat())];
+  return `<div class="card"><h3>Route network · ${R.length} route${R.length===1?"":"s"}</h3><svg viewBox="0 0 340 170" class="flightmap">${mapBase()}${R.map(([u,v])=>{ const a=cxy(u),b=cxy(v),c=arcPath(a,b); return `<path d="M${a[0]},${a[1]} Q${c[0]},${c[1]} ${b[0]},${b[1]}" fill="none" stroke="#d4a64a" stroke-width="1.4" opacity=".85"/>`; }).join("")}${ks.map(k=>{ const p=cxy(k); return `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#fff"/><text x="${p[0]+4}" y="${p[1]-4}" class="mlbl">${esc(CITIES[k]?CITIES[k].name:k==="la"?"LA":k==="hongkong"?"Hong Kong":k[0].toUpperCase()+k.slice(1))}</text>`; }).join("")}</svg>${R.length?"":`<div class="muted" style="font-size:12px">Add capacity below to open your first route.</div>`}</div>`; }
 
 </script>
 <script>
