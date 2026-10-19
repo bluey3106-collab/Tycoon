@@ -420,6 +420,7 @@ textarea{width:100%;min-height:70px;background:var(--panel2);border:1px solid va
 .charbtn{border:1px solid var(--line);background:var(--panel2);border-radius:12px;overflow:hidden;padding:0;cursor:pointer;color:var(--fg);display:flex;flex-direction:column}
 .charbtn img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}.charbtn span{padding:6px;font-weight:650;font-size:13px}
 .card.pitch{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
+.v3d{cursor:default}.v3dx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:3}
 </style>
 <div id="app"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -2425,7 +2426,7 @@ function carsLife(){
   return `<div class="sechead"><h2>Your cars</h2><span class="eyebrow">${S.cars.length}</span></div>${S.cars.length?`<div class="list">${mine}</div>`:`<div class="empty">Your driveway's empty.</div>`}
   <div class="ig">${img("track","Track day circuit")}<div class="call" style="left:4%;top:8%"><span class="lb">Track days · <b>win up to £8,000</b></span></div></div>
   <div class="sechead"><h2>Showroom</h2></div><div class="muted" style="font-size:12.5px">New cars lose value; classics and limited hypercars gain it. Driving gives you fame. Track days race 9 other drivers for up to £8,000.</div>
-  <div class="eqs" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${CARS_LUX.map(T=>`<div class="eq wide">${img(T.art,T.name)}<div class="in"><h3>${T.name}</h3><div class="muted" style="font-size:12.5px">${T.desc}</div><div class="chips">${T.project?"":`<span class="chip">Perf ${T.perf}</span>`}<span class="chip ${T.grow>0?"g":T.grow<0?"b":""}">${T.grow>0?"Gains value":T.grow<0?"Loses value":"Restore & flip"}</span>${T.hire?`<span class="chip g">Hire ${money(T.hire)}/wk</span>`:""}</div><div class="num goldc">${money(T.price)} <span class="muted" style="font-size:11.5px">+ ${money(T.ins)}/wk</span></div><div class="btns"><button class="btn small" type="button" data-buycar="${T.id}" ${S.cash<T.price?"disabled":""}>Buy</button></div></div></div>`).join("")}</div>`;
+  <div class="eqs" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${CARS_LUX.map(T=>`<div class="eq wide">${img(T.art,T.name)}<div class="in"><h3>${T.name}</h3><div class="muted" style="font-size:12.5px">${T.desc}</div><div class="chips">${T.project?"":`<span class="chip">Perf ${T.perf}</span>`}<span class="chip ${T.grow>0?"g":T.grow<0?"b":""}">${T.grow>0?"Gains value":T.grow<0?"Loses value":"Restore & flip"}</span>${T.hire?`<span class="chip g">Hire ${money(T.hire)}/wk</span>`:""}</div><div class="num goldc">${money(T.price)} <span class="muted" style="font-size:11.5px">+ ${money(T.ins)}/wk</span></div><div class="btns">${CAR3D.includes(T.id)?`<button class="btn small ghost" type="button" data-car3d="${T.id}">🔄 3D</button>`:""}<button class="btn small" type="button" data-buycar="${T.id}" ${S.cash<T.price?"disabled":""}>Buy</button></div></div></div>`).join("")}</div>`;
 }
 function yachtLife(){
   return `<div class="list" style="grid-template-columns:1fr">${YACHTS.map(Y=>{ const y=S.yachts.find(x=>x.type===Y.id);
@@ -3171,6 +3172,7 @@ document.addEventListener("click",ev=>{
   if(d.pacc){ const [k,id,oid]=d.pacc.split("|"); if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap to accept"; setTimeout(()=>{ if(t.isConnected) delete t.dataset.armed; },3000); return; } const r=acceptPitch(S,k,+id,+oid); if(r.ok&&r.sold){ bizOpen=null; gOpen=false; tab="garage"; bSeg="empire"; } done(r.ok?(r.sold?`Sold to ${r.of.who} for ${money(r.of.amount)}!`:`${r.of.who} bought ${Math.round(r.of.pct*100)}% for ${money(r.of.amount)}.`):"",r.ok?"rush":"buzz"); return; }
   if(d.pdec){ const [k,id]=d.pdec.split("|"); declinePitch(S,k,+id); done("Offers turned down."); return; }
   if(d.bback){ const r=buyBack(S,+d.bback); done(r.ok?`You own 100% again (${money(r.cost)}).`:r.msg,r.ok?"cash":"buzz"); return; }
+  if(d.car3d){ view3d(d.car3d); return; }
   if(d.char){ if(d.char==="x") S.char=null; else { S.char=+d.char; sfx("cash"); } save(); render(); return; }
   if(casinoClick(t,d)) return;
   if(d.lseg){ lSeg=d.lseg; render(); return; }
@@ -3319,7 +3321,7 @@ document.addEventListener("keydown",ev=>{ if(S) return; if(ev.key==="Enter"){ if
 
 /* ---------- the loop ---------- */
 let acc=0, last=performance.now(), saveAt=0;
-let matchTimer=null; function matchTick(){ clearInterval(matchTimer); matchTimer=setInterval(()=>{ if(!sheet||sheet.type!=="match"){ clearInterval(matchTimer); return; } if(sheet.shown>90){ clearInterval(matchTimer); return; } const before=sheet.m.ev.filter(e=>e.m<=sheet.shown).length; sheet.shown+=1; const now=sheet.m.ev.filter(e=>e.m<=sheet.shown); if(now.length>before&&now[now.length-1].t==="goal") sfx(now[now.length-1].us?"cash":"buzz"); if(sheet.shown===91) sfx(sheet.m.res==="W"?"rush":"ping"); render(); },160); }
+let matchTimer=null; function matchTick(){ clearInterval(matchTimer); matchTimer=setInterval(()=>{ if(!sheet||sheet.type!=="match"){ clearInterval(matchTimer); return; } if(sheet.shown>90){ clearInterval(matchTimer); return; } const before=sheet.m.ev.filter(e=>e.m<=sheet.shown).length; sheet.shown+=1; const now=sheet.m.ev.filter(e=>e.m<=sheet.shown); if(now.length>before&&now[now.length-1].t==="goal"){ sfx(now[now.length-1].us?"cash":"buzz"); say(now[now.length-1].us?"c_goal":"c_against"); } if(sheet.shown===2) say("c_kickoff"); if(sheet.shown===91){ sfx(sheet.m.res==="W"?"rush":"ping"); say(sheet.m.res==="W"?"c_win":sheet.m.res==="L"?"c_loss":"c_draw"); } render(); },160); }
 function catchUpNow(ms){ if(!S) return; const a=catchUp(S,ms); if(a){ sheet={type:"away",a}; S._toasts=[]; render(); } }
 function loop(){
   const now=performance.now(); const dt=Math.min(now-last,2000); last=now;
@@ -3579,6 +3581,11 @@ function pitchCard(kind,o){ const P=o.pitch&&o.pitch.until>S.t?o.pitch:null; con
     ${P?`<div class="list">${P.offers.map(f=>`<div class="line" style="align-items:center;gap:8px"><span><b>${esc(f.who)}</b><br><span class="muted" style="font-size:12px">${f.type==="stake"?`Wants ${Math.round(f.pct*100)}% of the company`:"Wants to buy it outright"} · ${f.amount>val*(f.type==="stake"?f.pct:1)?`<span class="good">${Math.round((f.amount/(val*(f.type==="stake"?f.pct:1))-1)*100)}% over value</span>`:"under value"}</span></span><button class="btn small" type="button" data-pacc="${key}|${f.id}">${shortMoney(f.amount)}</button></div>`).join("")}</div>
       <div class="chips"><span class="chip">Offers expire ${when(S,P.until)}</span><button class="linkbtn" type="button" data-pdec="${key}">Turn them all down</button></div>`
     :`<button class="btn small" type="button" data-pitch="${key}" ${(o.pitchAt||0)>S.t||S.cash<fee?"disabled":""}>${(o.pitchAt||0)>S.t?`Pitch again ${when(S,o.pitchAt)}`:`Pitch to investors · ${shortMoney(fee)} fee`}</button>`}</div>`; }
+const CAR3D=["hatch","saloon","classic","super","hyper","project"];
+let mvLoaded=false;
+function view3d(id){ const T=CARS_LUX.find(x=>x.id===id); if(!mvLoaded){ mvLoaded=true; const sc=document.createElement("script"); sc.type="module"; sc.src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"; document.head.appendChild(sc); }
+  const el=document.createElement("div"); el.className="cutscene v3d"; el.innerHTML=`<model-viewer src="art/car3d_${id}.glb" camera-controls auto-rotate auto-rotate-delay="0" rotation-per-second="25deg" shadow-intensity="1" exposure="1.1" environment-image="neutral" touch-action="pan-y" style="width:100%;height:100%;background:radial-gradient(circle at 50% 60%,#2a2a2a,#0b0b0b)"></model-viewer><div class="cuttxt" style="bottom:80px"><span class="eyebrow">Showroom · drag to spin</span><b>${esc(T?T.name:"")}</b></div><button class="btn small ghost v3dx" type="button">Close</button>`;
+  document.body.appendChild(el); el.querySelector(".v3dx").onclick=()=>el.remove(); }
 
 </script>
 <script>
