@@ -435,6 +435,18 @@ textarea{width:100%;min-height:70px;background:var(--panel2);border:1px solid va
 .mlbl{font:600 7.5px var(--mono,monospace);fill:#e8e2d2}
 .card.flight{display:flex;flex-direction:column;gap:8px;padding-top:0;overflow:hidden}
 .card.flight .cashero{margin:0 -14px}
+.st-paris .cityname{font-family:"Didot","Bodoni 72",Georgia,serif;font-style:italic;letter-spacing:.02em}
+.st-paris{box-shadow:0 0 24px rgba(201,164,232,.3)}
+.st-hk .cityname{color:#fff0f0;text-shadow:0 0 8px #ff5a5a,0 0 20px #ff5a5a}
+.st-hk{box-shadow:0 0 24px rgba(255,90,90,.35)}
+.st-la .cityname{background:linear-gradient(90deg,#ffb347,#ff5e9c);-webkit-background-clip:text;background-clip:text;color:transparent;font-family:Impact,"Arial Narrow",sans-serif;text-transform:uppercase}
+.st-la{box-shadow:0 0 24px rgba(255,179,71,.3)}
+.st-sg .cityname{color:#e9fff8;letter-spacing:.06em;text-transform:uppercase;font-weight:300}
+.st-sg{box-shadow:0 0 24px rgba(95,211,179,.3)}
+:root[data-city="paris"]{--bg:#120f17;--panel:#1f1a27;--panel2:#18141f;--line:#342c42;--gold:#c9a4e8;--gold2:#e6d2f7;--muted:#a69cb4}
+:root[data-city="hongkong"]{--bg:#120a0c;--panel:#221417;--panel2:#1a0f12;--line:#3d2328;--gold:#ff5a5a;--gold2:#ffb0a8;--muted:#b49a9c}
+:root[data-city="la"]{--bg:#16100c;--panel:#261b14;--panel2:#1e1510;--line:#432f22;--gold:#ffb347;--gold2:#ffd59a;--muted:#b8a593}
+:root[data-city="singapore"]{--bg:#0b1312;--panel:#15211f;--panel2:#101a18;--line:#243936;--gold:#5fd3b3;--gold2:#a8f0dc;--muted:#97b0aa}
 </style>
 <div id="app"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -460,6 +472,10 @@ const LOCS = {
   newyork:{id:"newyork", city:"newyork", name:"New York", sub:"Brooklyn service centre", art:"city_newyork", desc:"Huge market, high costs.", rent:1900, rates:240, utils:140, ins:180, deposit:7600, market:165, demand:1.35, tiers:[.3,.45,.25], maxBays:6},
   monaco:{id:"monaco", city:"monaco", name:"Monaco", sub:"Fontvieille prestige workshop", art:"city_monaco", desc:"Tiny, but every car is exotic.", rent:2600, rates:0, utils:180, ins:220, deposit:10400, market:215, demand:.9, tiers:[0,.2,.8], maxBays:4},
   tokyo:{id:"tokyo", city:"tokyo", name:"Tokyo", sub:"Shinagawa precision garage", art:"city_tokyo", desc:"Customers expect perfection.", rent:1300, rates:150, utils:130, ins:110, deposit:5200, market:128, demand:1.25, tiers:[.3,.5,.2], maxBays:5},
+  paris:{id:"paris", city:"paris", name:"Paris", sub:"Marais atelier garage", art:"city_paris", desc:"Classic cars and fussy owners.", rent:1450, rates:170, utils:120, ins:120, deposit:5800, market:132, demand:1.2, tiers:[.3,.45,.25], maxBays:5},
+  hongkong:{id:"hongkong", city:"hongkong", name:"Hong Kong", sub:"Kowloon multi-storey workshop", art:"city_hongkong", desc:"Tiny space, enormous demand.", rent:2100, rates:200, utils:140, ins:150, deposit:8400, market:150, demand:1.45, tiers:[.25,.45,.3], maxBays:4},
+  la:{id:"la", city:"la", name:"Los Angeles", sub:"Burbank custom & restoration shop", art:"city_la", desc:"Car culture capital. Celebrities pay anything.", rent:1700, rates:190, utils:150, ins:170, deposit:6800, market:158, demand:1.3, tiers:[.2,.45,.35], maxBays:6},
+  singapore:{id:"singapore", city:"singapore", name:"Singapore", sub:"Ubi industrial workshop", art:"city_singapore", desc:"Cars cost a fortune here, so owners look after them.", rent:1800, rates:160, utils:130, ins:140, deposit:7200, market:145, demand:1.25, tiers:[.15,.5,.35], maxBays:5},
   miami:{id:"miami", city:"miami", name:"Miami", sub:"Wynwood custom shop", art:"city_miami", desc:"Sunshine, big cars, big spenders.", rent:1500, rates:180, utils:150, ins:160, deposit:6000, market:152, demand:1.2, tiers:[.2,.45,.35], maxBays:6},
   marbella:{id:"marbella", city:"marbella", name:"Marbella", sub:"Puerto Banús service garage", art:"city_marbella", desc:"Busy in summer, holiday-home owners.", rent:900, rates:60, utils:90, ins:90, deposit:3600, market:114, demand:1.0, tiers:[.15,.45,.4], maxBays:5},
   wandsworth:{id:"wandsworth", name:"Wandsworth", sub:"Modern glass-front unit", art:"loc_wandsworth", desc:"Wealthy area with premium cars that pay more.", rent:980, rates:160, utils:85, ins:95, deposit:3920, market:115, demand:1.22, tiers:[.15,.45,.4], maxBays:6},
@@ -473,6 +489,10 @@ const CITIES = {
   newyork:{name:"New York", art:"city_newyork", flight:480, ticket:1800, holiday:7000},
   miami:{name:"Miami", art:"city_miami", flight:540, ticket:1700, holiday:5500},
   tokyo:{name:"Tokyo", art:"city_tokyo", flight:840, ticket:2400, holiday:6500},
+  paris:{name:"Paris", art:"city_paris", flight:75, ticket:160, holiday:4500},
+  hongkong:{name:"Hong Kong", art:"city_hongkong", flight:780, ticket:2200, holiday:6000},
+  la:{name:"Los Angeles", art:"city_la", flight:660, ticket:2000, holiday:7000},
+  singapore:{name:"Singapore", art:"city_singapore", flight:800, ticket:2300, holiday:6500},
 };
 const JETS = [
   {id:"light", name:"Light jet", price:4500000, range:240, weekly:22000, perFlight:6000, speed:.8, art:"jet_light", desc:"Europe hops: Manchester, Monaco, Marbella."},
@@ -828,6 +848,10 @@ const PROPERTY_TYPES = [
   {id:"ny_pent", city:"newyork", name:"Central Park penthouse", area:"New York", price:24000000, rent:16000, upkeep:2500, art:"prop_penthouse", w:1},
   {id:"mc_apt", city:"monaco", name:"Harbour-view apartment", area:"Monaco", price:9500000, rent:6000, upkeep:800, art:"prop_townhouse", w:2},
   {id:"tk_apt", city:"tokyo", name:"Minato high-rise apartment", area:"Tokyo", price:1900000, rent:1700, upkeep:220, art:"prop_flat", w:2},
+  {id:"par_apt", city:"paris", name:"Haussmann apartment, 8th arrondissement", area:"Paris", price:3800000, rent:4200, upkeep:600, art:"prop_townhouse", w:2},
+  {id:"hk_pent", city:"hongkong", name:"Mid-Levels penthouse", area:"Hong Kong", price:16000000, rent:11000, upkeep:1700, art:"prop_penthouse", w:1},
+  {id:"la_villa", city:"la", name:"Hollywood Hills villa", area:"Los Angeles", price:9500000, rent:9000, upkeep:1300, art:"prop_mansion", w:2},
+  {id:"sg_condo", city:"singapore", name:"Marina Bay condo", area:"Singapore", price:4600000, rent:4800, upkeep:650, art:"prop_flat", w:2},
   {id:"mia_beach", city:"miami", name:"Miami Beach house", area:"Miami", price:4100000, rent:4300, upkeep:500, art:"prop_mansion", w:2},
   {id:"mar_villa", city:"marbella", name:"Golden Mile villa", area:"Marbella", price:3300000, rent:3800, upkeep:400, art:"prop_mansion", w:2},
   {id:"mar_apt", city:"marbella", name:"Marina apartment", area:"Marbella", price:850000, rent:1100, upkeep:120, art:"prop_flat", w:3},
@@ -1014,8 +1038,12 @@ const LOCAL_NAMES={
   dubai:["Omar Al-Mansoori","Fatima Al-Hashimi","Rashid Khan","Aarav Nair","Yousef Haddad","Layla Saeed","Sanjay Menon","Hamad Al-Falasi","Ritu Sharma","Karim Aziz"],
   newyork:["Tony Russo","Keisha Johnson","Mike O'Brien","Rosa Delgado","Dmitri Volkov","Jasmine Lee","Vinny Caruso","Tanya Brooks","Eli Goldberg","Andre Williams"],
   miami:["Carlos Mendoza","Yesenia Cruz","Luis Herrera","Brianna Davis","Marco Valdés","Tiana Brooks","Rafael Pérez","Gabriela Soto","Jamal Carter","Daniela Ríos"],
-  tokyo:["Haruto Sato","Yui Tanaka","Kenji Watanabe","Aiko Suzuki","Ren Takahashi","Mei Kobayashi","Daichi Ito","Sakura Yamamoto","Takumi Nakamura","Hana Kato"]};
-const CITY_WAGE={london:1,manchester:.9,monaco:1.45,marbella:1,dubai:1.2,newyork:1.35,miami:1.2,tokyo:1.15};
+  tokyo:["Haruto Sato","Yui Tanaka","Kenji Watanabe","Aiko Suzuki","Ren Takahashi","Mei Kobayashi","Daichi Ito","Sakura Yamamoto","Takumi Nakamura","Hana Kato"],
+  paris:["Julien Moreau","Camille Dubois","Théo Laurent","Inès Benali","Maxime Girard","Chloé Fontaine","Yanis Haddad","Léa Rousseau","Antoine Mercier","Manon Lefèvre"],
+  hongkong:["Ka-Ho Chan","Wing Yee Wong","Jason Lau","Michelle Cheung","Kelvin Ng","Cherry Leung","Marcus Ho","Ivy Tsang","Dickson Lam","Fiona Yip"],
+  la:["Diego Alvarez","Brittany Cole","Kai Nakamura","Marisol Vega","Tyler Brooks","Jade Kim","Andre Thompson","Sierra Lopez","Cody Reed","Maya Patel"],
+  singapore:["Wei Jie Tan","Nur Aisyah","Rajesh Kumar","Li Ting Lim","Darren Goh","Priya Raman","Marcus Teo","Hui Min Ong","Ahmad Faiz","Jasmine Chua"]};
+const CITY_WAGE={london:1,manchester:.9,monaco:1.45,marbella:1,dubai:1.2,newyork:1.35,miami:1.2,tokyo:1.15,paris:1.2,hongkong:1.25,la:1.3,singapore:1.2};
 const TRAITS={
   fast:{name:"Speed demon",desc:"12% quicker, a bit sloppier",spd:1.12,q:-.02,tech:true},
   perfect:{name:"Perfectionist",desc:"Fewer comebacks, 8% slower",spd:.92,q:.04,tech:true},
@@ -1111,7 +1139,43 @@ const CITY_INFO={
           {id:"karaoke",name:"Karaoke with car executives",cost:8000,cool:5,desc:"35% chance of a £100k–£400k supply deal.",fx:{win:{p:.35,lo:100000,hi:400000,yes:"Your ballad sealed it: £X deal.",no:"Great night, bad singing, no deal."},fame:2}},
           {id:"sumo",name:"Sumo tournament box",cost:20000,cool:4,desc:"+5 fame.",fx:{fame:5}},
           {id:"wangan",name:"Highway night cruise",cost:3000,cool:3,desc:"Tokyo garages +30% work for 4 days.",fx:{boost:[1.3,4],fame:2}}],
-    events:[{t:"Tokyo Auto Salon",x:"Tuners want everything done before the show.",m:1.6,d:3},{t:"Typhoon",x:"Nobody's going out.",m:.7,d:2}]}};
+    events:[{t:"Tokyo Auto Salon",x:"Tuners want everything done before the show.",m:1.6,d:3},{t:"Typhoon",x:"Nobody's going out.",m:.7,d:2}]},
+  paris:{tag:"La Ville Lumière",style:"paris",theme:"#c9a4e8",blurb:"Cobbled streets, scooters everywhere and owners who treat their classics like art.",
+    perks:["Classic car capital","Fashion & luxury crowd"],
+    acts:[{id:"retro",name:"Rétromobile classic auction",cost:0,cool:5,desc:"Bid on a classic at 15–30% under value."},
+          {id:"pfw",name:"Front row at Fashion Week",cost:30000,cool:7,desc:"+8 fame.",fx:{fame:8,say:"Flashbulbs everywhere."}},
+          {id:"michelin",name:"Three-star Michelin dinner",cost:12000,cool:4,desc:"30% chance a luxury-brand boss offers a £100k–£500k partnership.",fx:{win:{p:.3,lo:100000,hi:500000,yes:"Over dessert, a deal: £X.",no:"Incredible food, no deal."},fame:2}},
+          {id:"seine",name:"Private Seine cruise for investors",cost:40000,cool:7,desc:"35% chance an investor puts £250k–£1.5m into you.",fx:{win:{p:.35,lo:250000,hi:1500000,yes:"Under the Eiffel Tower, a cheque: £X.",no:"Beautiful night. They'll 'think about it'."}}},
+          {id:"lemans",name:"Le Mans 24 Hours hospitality",cost:60000,cool:10,desc:"+10 fame, and Paris garages +40% work for 5 days.",fx:{fame:10,boost:[1.4,5]}},
+          {id:"champs",name:"Pop-up on the Champs-Élysées",cost:25000,cool:6,desc:"Paris garages +50% work for 5 days.",fx:{boost:[1.5,5],fame:3}}],
+    events:[{t:"Grève (strike)",x:"Metro's down — everyone's driving.",m:1.45,d:2},{t:"August holidays",x:"The whole city's gone to the coast.",m:.65,d:3}]},
+  hongkong:{tag:"Pearl of the Orient",style:"hk",theme:"#ff5a5a",blurb:"Neon over the harbour, supercars in car parks forty floors up, and money that never sleeps.",
+    perks:["Huge demand per lift","Asian finance hub"],
+    acts:[{id:"happyvalley",name:"Wednesday night at Happy Valley",cost:0,cool:3,desc:"Bet on the horses: 30% chance to win 3.5×.",bets:[10000,50000,250000],fx:{gamble:{p:.3,x:3.5}}},
+          {id:"junk",name:"Junk boat party with tycoons",cost:35000,cool:6,desc:"35% chance of a £300k–£2m deal.",fx:{win:{p:.35,lo:300000,hi:2000000,yes:"Somewhere off Lamma Island, a handshake: £X.",no:"Great party, no deal."},fame:3}},
+          {id:"dimsum",name:"Dim sum with bank chairmen",cost:6000,cool:4,desc:"40% chance of a £50k–£250k introduction fee.",fx:{win:{p:.4,lo:50000,hi:250000,yes:"Between har gow and siu mai: £X.",no:"Excellent dumplings."}}},
+          {id:"taxihk",name:"Red taxi fleet contract",cost:20000,cool:7,desc:"Hong Kong garages +60% work for 6 days.",fx:{boost:[1.6,6]}},
+          {id:"peak",name:"Gala on Victoria Peak",cost:50000,cool:7,desc:"+9 fame.",fx:{fame:9,say:"The whole city glittering below you."}},
+          {id:"hkgp",name:"Street race paddock pass",cost:15000,cool:4,desc:"+5 fame, Hong Kong garages +25% work for 3 days.",fx:{fame:5,boost:[1.25,3]}}],
+    events:[{t:"Typhoon signal 8",x:"Everything shuts.",m:.6,d:2},{t:"Lunar New Year",x:"Everyone wants their car perfect.",m:1.5,d:3}]},
+  la:{tag:"Hollywood & horsepower",style:"la",theme:"#ffb347",blurb:"Palm trees, freeways and the richest car collectors on the planet.",
+    perks:["Celebrity clients","Exotic car auctions"],
+    acts:[{id:"laauction",name:"Exotic car auction",cost:0,cool:5,desc:"Bid on a supercar or hypercar at 15–30% under value."},
+          {id:"premiere",name:"Hollywood premiere",cost:20000,cool:5,desc:"Walk the red carpet: +8 fame.",fx:{fame:8}},
+          {id:"studio",name:"Movie studio car contract",cost:30000,cool:8,desc:"40% chance of a £200k–£900k picture-car deal.",fx:{win:{p:.4,lo:200000,hi:900000,yes:"Your cars are in the next blockbuster: £X.",no:"They went with someone else."},fame:2}},
+          {id:"malibu",name:"Malibu beach party",cost:15000,cool:4,desc:"+5 fame.",fx:{fame:5}},
+          {id:"carscoffee",name:"Cars & Coffee meet",cost:2000,cool:3,desc:"LA garages +35% work for 4 days.",fx:{boost:[1.35,4],fame:2}},
+          {id:"rodeo",name:"Shopping spree on Rodeo Drive",cost:80000,cool:7,desc:"+10 fame.",fx:{fame:10,say:"Bags everywhere."}}],
+    events:[{t:"Awards season",x:"Every celebrity wants their car detailed.",m:1.5,d:3},{t:"Wildfire smoke",x:"People are staying in.",m:.7,d:2}]},
+  singapore:{tag:"The Lion City",style:"sg",theme:"#5fd3b3",blurb:"Spotless streets, eye-watering car prices and owners who never miss a service.",
+    perks:["Premium owners","Low tax"],
+    acts:[{id:"sgf1",name:"Night race paddock club",cost:80000,cool:10,desc:"+12 fame.",fx:{fame:12,say:"Under the floodlights, everyone knows your name."}},
+          {id:"marina",name:"Marina Bay rooftop deal",cost:30000,cool:7,desc:"40% chance of a £300k–£1.5m deal.",fx:{win:{p:.4,lo:300000,hi:1500000,yes:"With the skyline behind you: £X.",no:"Amazing view, no deal."}}},
+          {id:"hawker",name:"Hawker centre food tour",cost:500,cool:3,desc:"+2 fame. Cheapest great night out in the world.",fx:{fame:2}},
+          {id:"fintech",name:"Fintech summit keynote",cost:10000,cool:6,desc:"35% chance of a £100k–£600k investment.",fx:{win:{p:.35,lo:100000,hi:600000,yes:"A fund backs you: £X.",no:"Good talk. No cheque."},fame:3}},
+          {id:"coe",name:"COE rush week",cost:15000,cool:7,desc:"Singapore garages +60% work for 5 days.",fx:{boost:[1.6,5]}},
+          {id:"sentosa",name:"Sentosa yacht club",cost:25000,cool:5,desc:"+6 fame.",fx:{fame:6}}],
+    events:[{t:"New car permit round",x:"Everyone's getting their car ready to sell.",m:1.45,d:3},{t:"Monsoon downpour",x:"Roads flooded.",m:.75,d:2}]}};
 function cityMult(s,city){ const b=(s.cityBoost||{})[city]; let m=1; if(b) for(const x of b) if(x.until>s.t) m*=x.m; return m; }
 function addCityBoost(s,city,m,days){ s.cityBoost=s.cityBoost||{}; (s.cityBoost[city]=(s.cityBoost[city]||[]).filter(x=>x.until>s.t)).push({m,until:s.t+days*DAY}); }
 const WEALTH_TIERS=[{at:0,name:"Grafter",x:1,status:"Nobody knows your name here yet"},{at:250e3,name:"Comfortable",x:3,status:"Locals are starting to recognise you"},{at:5e6,name:"Rich",x:12,status:"The VIP rope lifts when you walk up"},{at:100e6,name:"Mega-rich",x:60,status:"The city rolls out the red carpet"},{at:1e9,name:"Billionaire",x:300,status:"You basically run this town"}];
@@ -1142,6 +1206,8 @@ function cityDo(s,id,bet){ const city=s.at; const A=cityActs(city,s).find(a=>a.i
     case "ldnauction": msg=auction(["classic"],.15,.35); break;
     case "mcrauction": msg=auction(["hatch","saloon"],.2,.4); break;
     case "jdm": msg=auction(["super"],.25,.4); break;
+    case "retro": msg=auction(["classic"],.15,.3); break;
+    case "laauction": msg=auction(["super","hyper"],.15,.3); break;
     case "cabs": addCityBoost(s,"london",1.4,5); msg="The cab firm's on board. London garages get 40% more work for 5 days."; break;
     case "derby": gainFame(s,4); addCityBoost(s,"manchester",1.3,3); msg="What a game. +4 fame, and Manchester garages get 30% more work for 3 days."; break;
     case "students": addCityBoost(s,"manchester",1.5,4); msg="Flyers everywhere. Manchester garages get 50% more work for 4 days."; break;
@@ -1912,7 +1978,7 @@ function endOfDay(s){
 function yearSummary(s,fromDay,toDay){ const rs=s.reports.filter(r=>r.day>fromDay&&r.day<=toDay); const sum=k=>rs.reduce((t,r)=>t+(r[k]||0),0); const out=k=>rs.reduce((t,r)=>t+((r.out||{})[k]||0),0);
   return {days:rs.length, revenue:sum("revenue"), rent:sum("rent"), parts:sum("cogs"), running:out("running"), invest:out("invest"), tax:out("tax"), profit:sum("revenue")+sum("rent")-sum("cogs")-out("running")}; }
 // tax depends on where you live (your home), not where you work
-const TAX_BY_CITY={london:.20,manchester:.20,monaco:0,dubai:0,marbella:.25,newyork:.30,miami:.21,tokyo:.30};
+const TAX_BY_CITY={london:.20,manchester:.20,monaco:0,dubai:0,marbella:.25,newyork:.30,miami:.21,tokyo:.30,paris:.45,hongkong:.15,la:.37,singapore:.22};
 function residence(s){ const h=(s.props||[]).find(p=>p.mode==="home"); const T=h&&propType(h); return (T&&T.city)||"london"; }
 function taxRate(s){ const r=TAX_BY_CITY[residence(s)]??TAX_RATE; return Math.max(0,r-(s.accountant&&r>0?0.05:0)); }
 function yearEnd(s){
@@ -2575,7 +2641,7 @@ function clubLife(){
   return offer+head+seg+body;
 }
 
-const CITY_LAYOUT={london:["hero","biz","acts","holiday"],manchester:["hero","acts","biz","holiday"],monaco:["hero","acts","holiday","biz"],marbella:["hero","holiday","acts","biz"],dubai:["hero","acts","biz","holiday"],newyork:["hero","biz","acts","holiday"],miami:["hero","acts","holiday","biz"],tokyo:["hero","acts","biz","holiday"]};
+const CITY_LAYOUT={paris:["hero","acts","holiday","biz"],hongkong:["hero","biz","acts","holiday"],la:["hero","acts","biz","holiday"],singapore:["hero","biz","acts","holiday"],london:["hero","biz","acts","holiday"],manchester:["hero","acts","biz","holiday"],monaco:["hero","acts","holiday","biz"],marbella:["hero","holiday","acts","biz"],dubai:["hero","acts","biz","holiday"],newyork:["hero","biz","acts","holiday"],miami:["hero","acts","holiday","biz"],tokyo:["hero","acts","biz","holiday"]};
 function cityScene(here,home){ const C=CITIES[here], I=CITY_INFO[here]; const mult=cityMult(S,here); const gs=S.garages.filter(g=>locCity(g.loc)===here);
   const parts={
     hero:`${meCard()}<div class="cityhero st-${I.style}" style="--th:${I.theme}"><div class="ig"><video class="cityvid" src="art/loop_${here}.mp4" poster="${ART(C.art)}" autoplay muted loop playsinline aria-hidden="true"></video></div><div class="cityov"><span class="eyebrow">📍 You're in</span><div class="cityname">${C.name}</div><div class="citytag">${esc(I.tag)}</div><div class="wtier t${wealthTier(S)}">${["🔧","💷","🥂","💎","👑"][wealthTier(S)]} ${WEALTH_TIERS[wealthTier(S)].name} · ${esc(WEALTH_TIERS[wealthTier(S)].status)}</div></div></div>
