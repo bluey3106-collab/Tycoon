@@ -1613,7 +1613,7 @@ function completeJob(s,gid,id){
   if(q.comeback){ s.today.cogs+=q.partsCost||0; s.stats.cogs+=q.partsCost||0; s.log.unshift({t:s.t,x:`Comeback fixed for ${q.cust}. No charge.`}); dirty(s); return res; }
   s.cash+=q.price; s.today.revenue+=q.price; s.today.cogs+=q.partsCost; s.today.jobs++; g.today.revenue+=q.price; g.today.jobs++;
   s.stats.revenue+=q.price; s.stats.cogs+=q.partsCost; s.stats.jobsDone++; g.stats.jobsDone++; g.stats.revenue+=q.price;
-  if(s.vat.registered) s.vat.output+=q.price/6;
+  if(s.vat.registered&&["london","manchester"].includes(locCity(g.loc))) s.vat.output+=q.price/6;
   const st=g.staff.find(x=>x.id===q.worker); if(st&&ROLES[st.role].cut){ res.cut=Math.round(q.labour*ROLES[st.role].cut); s.cash-=res.cut; spend(s,res.cut,"running"); }
   const ratio=q.price/(fairPrice(s,g,j,q.tier)*(q.urgent?1.2:1));
   const lateDays=Math.max(0,(s.t-q.dueAt)/DAY);
