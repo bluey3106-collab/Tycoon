@@ -2000,7 +2000,7 @@ function lottoDraw(s){
 function endOfDay(s){
   if(s.log&&s.log.length>120) s.log.length=120;
   propDaily(s); investDaily(s); luxDaily(s); for(const g of s.garages) if(!g.franchise&&hasRole(g,"manager")&&!g.staff.some(x=>ROLES[x.role].tech)&&s.cash>3000){ const r=hire(s,g.id,"mechanic"); if(r&&r.ok) addInfo(s,`${g.name}: manager hired a mechanic`,`Your manager runs the place but can't fix cars, so they hired ${r.st.name} to do the work.`,"good"); }
-  storyDaily(s); mansionDaily(s); isleDaily(s); moonDaily(s); lawDaily(s); polDaily(s); if(weekday(s.t)==="Mon") rivalWeek(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
+  storyDaily(s); mansionDaily(s); isleDaily(s); moonDaily(s); lawDaily(s); polDaily(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
   let running=0; for(const g of s.garages){ if(g.franchise){ franchiseDay(s,g); continue; } running+=dailyRunning(s,g).reduce((t,l)=>t+l[1],0); }
   s.cash-=running; spend(s,running,"running");
   const r={day:dayNo(s.t-1),...s.today,rent:s.today.rent||0,running,type:s.dayType,garages:s.garages.map(g=>({name:g.name,revenue:g.today.revenue,jobs:g.today.jobs,franchise:!!g.franchise}))}; r.profit=r.revenue+(r.rent||0)-r.cogs-r.overheads;
@@ -3180,9 +3180,9 @@ function manageSeg(g){ const run=dailyRunning(S,g); const L=LOCS[g.loc]; return 
   <div class="sec"><div class="card"><h3>Running costs · ${esc(L.name)}</h3><div class="kv">${run.map(l=>`<span>${l[0]}</span><span class="num">£${l[1]}/day</span>`).join("")}<span>Rent</span><span class="num">£${L.rent}/wk</span><span>Business rates</span><span class="num">£${L.rates}/wk</span><span>Utilities</span><span class="num">£${L.utils}/wk</span><span>Insurance</span><span class="num">£${L.ins}/wk</span><span>Staff wages</span><span class="num">£${g.staff.reduce((t,x)=>t+ROLES[x.role].wage,0)}/wk</span><span>All weekly fixed costs</span><span class="num goldc">${money(weeklyFixed(S))}/wk</span></div></div></div>`; }
 let gOpen=false;
 function garageTab(){
-  if(bSeg==="garages") bSeg="empire"; if(["jobs","parts","team"].includes(tab)){ gOpen=true; bSeg="empire"; }
+  if(bSeg==="garages"||bSeg==="rival") bSeg="empire"; if(["jobs","parts","team"].includes(tab)){ gOpen=true; bSeg="empire"; }
   if(bSeg==="empire"&&gOpen&&bizOpen==null) return garagePage();
-  const bs=`<div class="sec"><div class="seg" style="grid-template-columns:repeat(5,1fr)" role="tablist">${[["empire","Empire"],["deals","Deals"],["stocks","Stocks"],["rival","⚔ Rival"],["moon","🚀 Moon"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}" style="padding-inline:2px;font-size:12.5px">${l}</button>`).join("")}</div></div>`;
+  const bs=`<div class="sec"><div class="seg" style="grid-template-columns:repeat(4,1fr)" role="tablist">${[["empire","Empire"],["deals","Deals"],["stocks","Stocks"],["moon","🚀 Moon"]].map(([k,l])=>`<button type="button" role="tab" data-bseg="${k}" aria-selected="${bSeg===k}" style="padding-inline:2px;font-size:12.5px">${l}</button>`).join("")}</div></div>`;
   return bs+`<div class="sec">${bSeg==="empire"?empireTab():bSeg==="deals"?openNewHtml()+dealsTab():bSeg==="rival"?rivalTab():bSeg==="moon"?moonTab():stocksTab()}</div>`; }
 function garagePage(){ const g=curG();
   return `<div class="sec"><button class="linkbtn" type="button" id="gback" style="margin-bottom:6px">‹ Empire</button><div class="sechead"><h2>${esc(g.name)}</h2><span class="eyebrow">${esc(LOCS[g.loc].name)}${g.franchise?" · franchise":managed(g)?" · managed":""}</span></div></div>`+garageSubBar()+(tab==="jobs"?jobsTab():tab==="parts"?partsTab():tab==="team"?teamTab():garageInner()); }
