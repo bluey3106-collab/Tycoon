@@ -1386,8 +1386,18 @@ const RIVALS=[
   {id:"meridian",name:"Meridian Hotels",type:"hotel",city:"dubai",cap:1.3e9,blurb:"Luxury hotels across the Gulf and Europe."},
   {id:"atlas",name:"Atlas Private Bank",type:"bank",city:"newyork",cap:3.2e9,blurb:"Old-money private bank on Wall Street."},
   {id:"velocita",name:"Velocita Automobili",type:"carbrand",city:"monaco",cap:6.5e9,blurb:"Hand-built supercars. Fanatical buyers."},
-  {id:"skybridge",name:"SkyBridge Airways",type:"airline",city:"dubai",cap:9e9,blurb:"Long-haul airline with 120 jets."}];
-function rivalsState(s){ if(!s.rivals) s.rivals=RIVALS.map(R=>({id:R.id,cap:R.cap*(0.85+rng(s)*.3),stake:0,cost:0})); return s.rivals; }
+  {id:"skybridge",name:"SkyBridge Airways",type:"airline",city:"dubai",cap:9e9,blurb:"Long-haul airline with 120 jets."},
+  {id:"skyhigh",name:"SkyHigh Airlines",type:"airline",city:"dubai",cap:9e9,blurb:"Gulf super-carrier with 200 wide-body jets."},
+  {id:"lumen",name:"Lumen Hotels Group",type:"hotel",city:"paris",cap:1.4e10,blurb:"Palace hotels in every capital city."},
+  {id:"kaizen",name:"Kaizen Motors",type:"carbrand",city:"tokyo",cap:4.5e10,blurb:"One of the world's biggest car makers."},
+  {id:"harbour",name:"Harbour Pacific Bank",type:"bank",city:"hongkong",cap:6e10,blurb:"Asia's biggest bank. Owns half the skyline."},
+  {id:"sunset",name:"Sunset Studios",type:"nightclub",city:"la",cap:2.2e10,blurb:"Hollywood film studio, clubs and theme parks."},
+  {id:"merlion",name:"Merlion Property Trust",type:"developer",city:"singapore",cap:3e10,blurb:"Builds entire districts from scratch."},
+  {id:"titan",name:"Titan Logistics",type:"distributor",city:"newyork",cap:3.8e10,blurb:"Ships, trucks and warehouses on every continent."},
+  {id:"orbitx",name:"OrbitX Telecom",type:"bank",city:"london",cap:8e10,blurb:"Phones, broadband and satellites for 400 million people."},
+  {id:"aurum",name:"Aurum Luxury House",type:"dealer",city:"monaco",cap:1.2e11,blurb:"The world's biggest luxury goods empire."},
+  {id:"megacorp",name:"Global Megacorp",type:"carbrand",city:"newyork",cap:3e11,blurb:"The most valuable company on Earth. The final boss."}];
+function rivalsState(s){ if(!s.rivals) s.rivals=[]; for(const R of RIVALS) if(!s.rivals.some(r=>r.id===R.id)) s.rivals.push({id:R.id,cap:R.cap*(0.85+rng(s)*.3),stake:0,cost:0}); return s.rivals; }
 function stakeCost(r,pct){ const prem=1+Math.max(0,r.stake+pct-.25)*.5; return Math.round(r.cap*pct*prem/1000)*1000; }
 function buyStake(s,id,pct){ const r=rivalsState(s).find(x=>x.id===id); if(!r||r.taken) return {ok:false}; pct=Math.min(pct,1-r.stake); if(pct<=0) return {ok:false,msg:"You own it all."}; const c=stakeCost(r,pct); if(s.cash<c) return {ok:false,msg:"Not enough cash."};
   s.cash-=c; r.stake=Math.round((r.stake+pct)*100)/100; r.cost+=c; const R=RIVALS.find(x=>x.id===r.id); if(r.stake>=.25&&!r.warned){ r.warned=true; socialPost(s,"stake",{R,r}); } dirty(s); return {ok:true,c}; }
