@@ -1999,7 +1999,8 @@ function lottoDraw(s){
 }
 function endOfDay(s){
   if(s.log&&s.log.length>120) s.log.length=120;
-  propDaily(s); investDaily(s); luxDaily(s); storyDaily(s); mansionDaily(s); isleDaily(s); moonDaily(s); lawDaily(s); polDaily(s); if(weekday(s.t)==="Mon") rivalWeek(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
+  propDaily(s); investDaily(s); luxDaily(s); for(const g of s.garages) if(!g.franchise&&hasRole(g,"manager")&&!g.staff.some(x=>ROLES[x.role].tech)&&s.cash>3000){ const r=hire(s,g.id,"mechanic"); if(r&&r.ok) addInfo(s,`${g.name}: manager hired a mechanic`,`Your manager runs the place but can't fix cars, so they hired ${r.st.name} to do the work.`,"good"); }
+  storyDaily(s); mansionDaily(s); isleDaily(s); moonDaily(s); lawDaily(s); polDaily(s); if(weekday(s.t)==="Mon") rivalWeek(s); bizMgmtDaily(s); empireDaily(s); socialDaily(s); mgrAsk(s); cityEvents(s); if(weekday(s.t)==="Mon") for(const g of s.garages) g.cands={}; if(s.t>=s.listingsAt) genListings(s);
   let running=0; for(const g of s.garages){ if(g.franchise){ franchiseDay(s,g); continue; } running+=dailyRunning(s,g).reduce((t,l)=>t+l[1],0); }
   s.cash-=running; spend(s,running,"running");
   const r={day:dayNo(s.t-1),...s.today,rent:s.today.rent||0,running,type:s.dayType,garages:s.garages.map(g=>({name:g.name,revenue:g.today.revenue,jobs:g.today.jobs,franchise:!!g.franchise}))}; r.profit=r.revenue+(r.rent||0)-r.cogs-r.overheads;
